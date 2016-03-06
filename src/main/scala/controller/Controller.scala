@@ -1,8 +1,10 @@
 package controller
 
-import core.Arguments
+import core.{AuthoritativeScanner, Arguments}
 import output.CLIOutput
-import utils.{FileUtils, File}
+import utils.FileUtils
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 
 class Controller(private val arguments: Arguments, private val cli: CLIOutput) {
   val version = Map(("MAJOR",    0),
@@ -14,6 +16,7 @@ class Controller(private val arguments: Arguments, private val cli: CLIOutput) {
   def initialise() = {
     printBanner()
     printConfig()
+    Await.result(runScanForHostname(arguments.hostname), 365.days)
   }
 
   def printBanner() = {
@@ -32,6 +35,13 @@ class Controller(private val arguments: Arguments, private val cli: CLIOutput) {
     val resolversSize = arguments.resolvers.numberOfLines
 
     cli.printConfig(wordlistSize, resolversSize)
+  }
+
+  def runScanForHostname(hostname: String): Future[Unit] = {
+    cli.printTarget(hostname)
+    cli.printWarningWithTime("Starting:")
+
+    AuthoritativeScanner.performScan(hostname, cli)
   }
 }
 
