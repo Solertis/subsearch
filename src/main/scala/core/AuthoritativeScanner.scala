@@ -4,7 +4,7 @@ import output.CLIOutput
 import connection.DNSLookup
 import connection.DNSLookup.Record
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Promise, Future}
+import scala.concurrent.Future
 
 class AuthoritativeScanner(private val hostname: String, private val cli: CLIOutput) {
 
@@ -16,7 +16,7 @@ class AuthoritativeScanner(private val hostname: String, private val cli: CLIOut
         beginScan(dnsLookup)
       } else {
         cli.printErrorWithTime(s"Error: $hostname has no DNS records.")
-        Future {}
+        Future()
       }
     }
   }
@@ -29,19 +29,19 @@ class AuthoritativeScanner(private val hostname: String, private val cli: CLIOut
       }
       .flatMap(performZoneTransfers)
       .map(convertRecordDatasToSubdomains)
-      .map(_.filter(!_.startsWith(hostname)))
-      .map(_.foreach(cli.printFoundSubdomain))
+      .map(sortRecordsByName)
+      .map(printFoundRecords)
   }
 
   private def printAuthoritativeNameServers(nameServers: List[String]) =
     nameServers.foreach(nameServer => cli.printInfoWithTime(s"Authoritative Name Server - $nameServer"))
 
-  private def performZoneTransfers(nameServers: List[String]): Future[List[String]] =
+  private def performZoneTransfers(nameServers: List[String]): Future[List[Record]] =
     Future
       .sequence(nameServers.map(performZoneTransfer))
       .map(_.flatten)
 
-  private def performZoneTransfer(nameServer: String): Future[List[String]] = {
+  private def performZoneTransfer(nameServer: String): Future[List[Record]] = {
     val dnsLookup = DNSLookup.forHostnameAndResolver(hostname, nameServer)
     val zoneTransferRecords: Future[List[Record]] = dnsLookup.zoneTransfer()
 
@@ -51,16 +51,19 @@ class AuthoritativeScanner(private val hostname: String, private val cli: CLIOut
           if (records.getOrElse(List.empty).nonEmpty)
             cli.printSuccessWithTime(s"$nameServer vulnerable to zone transfer!")
       }
-      .map {
-        records =>
-          records
-            .filter(record => record.recordType == "NSEC")
-            .map(record => record.data)
-      }
   }
 
-  private def convertRecordDatasToSubdomains(recordDatas: List[String]): Set[String] =
-    recordDatas.toSet.map((data: String) => data.split(" ").head.stripSuffix(".").trim.toLowerCase)
+  private def convertRecordDatasToSubdomains(records: List[Record]): Set[Record] =
+    records.toSet.map(convertRecordDataToSubdomain)
+
+  private def convertRecordDataToSubdomain(record: Record): Record =
+    Record(record.recordType, record.name.split(" ").head.stripSuffix(".").trim.toLowerCase)
+
+  private def sortRecordsByName(records: Set[Record]): List[Record] =
+    records.toList.sortBy(_.name)
+
+  private def printFoundRecords(records: List[Record]): Unit =
+    records.foreach(cli.printFoundRecord)
 }
 
 object AuthoritativeScanner {

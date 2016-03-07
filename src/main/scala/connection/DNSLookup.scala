@@ -35,7 +35,7 @@ class DNSLookup(private val hostname: String, private val resolvers: List[String
     }
   }
 
-  private def recordsToData(records: List[Record]): List[String] = records.map(_.data)
+  private def recordsToData(records: List[Record]): List[String] = records.map(_.name)
 
   def zoneTransfer(): Future[List[Record]] = {
     if (resolvers.size != 1)
@@ -50,7 +50,9 @@ class DNSLookup(private val hostname: String, private val resolvers: List[String
           .asScala
           .toList
           .asInstanceOf[List[org.xbill.DNS.Record]]
-          .map(dnsRecord => Record(Type.string(dnsRecord.getType), dnsRecord.rdataToString()))
+          .map(dnsRecord => Record(Type.string(dnsRecord.getType), dnsRecord.getName.toString))
+          .filter(dnsRecord => !List("NSEC", "RRSIG").contains(dnsRecord.recordType))
+          .filter(dnsRecord => !dnsRecord.name.startsWith(hostname))
       }
 
       records.getOrElse(List.empty)
@@ -65,7 +67,7 @@ class DNSLookup(private val hostname: String, private val resolvers: List[String
 }
 
 object DNSLookup {
-  case class Record(recordType: String, data: String)
+  case class Record(recordType: String, name: String)
 
   def forHostname(hostname: String): DNSLookup =
     DNSLookup.forHostnameAndResolvers(hostname, List("8.8.8.8", "8.8.4.4"))

@@ -1,5 +1,6 @@
 package output
 
+import connection.DNSLookup.Record
 import pl.project13.scala.rainbow.Rainbow._
 import utils.TimeUtils
 
@@ -55,8 +56,8 @@ class CLIOutput {
   def printError(string: String) =
     printLineToCLI(string.red)
 
-  def printFoundSubdomain(subdomain: String) =
-    printSuccessWithTime(s"Subdomain  -  $subdomain")
+  def printFoundRecord(record: Record) =
+    printSuccessWithTime(f"${record.recordType}%6s  -  ${record.name}")
 
 }
 
