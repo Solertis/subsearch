@@ -6,12 +6,8 @@ The application flow is as follows:
 - Prints welcome text
 - Get's the authoritative name server(s) and checks to see if any of them can do zone transfers
     - If it can, does this first
-- Create Actors
-    - LoggingActor: Deals with all output including CLI and to file
-    - ResolverActor: Maintain a queue of valid resolvers
-    - SubdomainsActor: Maintain two queues, one with subdomains to search for, and one with priority subdomains to search for
-    - SearchCoordinatorActor: Coordinates searches. Maintains a list of "threads". If a SearchActor returns without having done any work,
-                              it will decrease the process count until hitting 0, at which point it will terminate the application
-    - SearchActor: This does the actual lookup. It gets a subdomain from the SubdomainsActor, and two resolvers from the ResolversActor.
-                   When it completes, it recycles the resolvers back to the ResolversActor, tells the LoggingActor about the discovered subdomain,
-                   and tells the parent actor that it's done working, finally terminating.
+- Begins subdomain bruteforce using Akka Actors
+    - SubdomainScanner: This is the master (not an actor) that launches all other actors.
+    - Listener: Deals with all output to CLI
+    - Dispatcher: Creates all scanners and delegates work to each. Maintains a queue of subdomains, priority subdomains, and resolvers.
+    - Scanner: This does the actual lookup.

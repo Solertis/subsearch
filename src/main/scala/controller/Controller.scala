@@ -1,10 +1,13 @@
 package controller
 
 import core.{AuthoritativeScanner, Arguments}
+import core.subdomainscanner.SubdomainScanner
+
 import output.CLIOutput
 import utils.FileUtils
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class Controller(private val arguments: Arguments, private val cli: CLIOutput) {
   val version = Map(("MAJOR",    0),
@@ -34,14 +37,19 @@ class Controller(private val arguments: Arguments, private val cli: CLIOutput) {
     val wordlistSize = arguments.wordlist.numberOfLines
     val resolversSize = arguments.resolvers.numberOfLines
 
-    cli.printConfig(wordlistSize, resolversSize)
+    cli.printConfig(arguments.threads, wordlistSize, resolversSize)
   }
 
   def runScanForHostname(hostname: String): Future[Unit] = {
     cli.printTarget(hostname)
-    cli.printWarningWithTime("Starting:")
 
-    AuthoritativeScanner.performScan(hostname, cli)
+    val authoritativeScan: Future[List[String]] =
+      if (!arguments.skipZoneTransfer)
+        AuthoritativeScanner.performScan(hostname, cli)
+      else
+        Future(List.empty)
+
+    authoritativeScan.flatMap(foundSubdomains => SubdomainScanner.performScan(arguments, foundSubdomains, cli))
   }
 }
 

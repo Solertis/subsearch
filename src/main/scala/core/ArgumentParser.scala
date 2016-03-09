@@ -5,7 +5,9 @@ import utils.File
 
 case class Arguments(hostname: String = "",
                      wordlist: File = File.fromFilename("wordlist.txt"),
-                     resolvers: File = File.fromFilename("resolvers.txt"))
+                     resolvers: File = File.fromFilename("resolvers.txt"),
+                     threads: Int = 10,
+                     skipZoneTransfer: Boolean = false)
 
 private class ArgumentParser(private val args: Array[String]) {
 
@@ -42,6 +44,24 @@ private class ArgumentParser(private val args: Array[String]) {
           config.copy(resolvers = File.fromFilename(argument))
       }
 
+    note("Optional:")
+
+    opt[Int]('t', "threads")
+      .valueName("THREADCOUNT")
+      .text("The number of concurrent threads whilst scanning. Defaults to 10.")
+      .action {
+        (threads, config) =>
+          verifyThreads(threads)
+          config.copy(threads = threads)
+      }
+
+    opt[Unit]('z', "no-zone-transfer")
+      .text("Avoids attempting a zone transfer against the host's authoritative name servers.")
+      .action {
+        (argument, config) =>
+          config.copy(skipZoneTransfer = true)
+      }
+
     note("Help:")
 
     help("help")
@@ -55,6 +75,11 @@ private class ArgumentParser(private val args: Array[String]) {
       printErrorThenExit("The " + description + "file is invalid.")
     else if (!file.isReadable)
       printErrorThenExit("The " + description + "file cannot be read.")
+  }
+
+  def verifyThreads(threads: Int) = {
+    if (threads < 1)
+      printErrorThenExit("Threads must be a positive integer.")
   }
 
   def parse(): Arguments =

@@ -8,7 +8,9 @@ import scala.concurrent.Future
 
 class AuthoritativeScanner(private val hostname: String, private val cli: CLIOutput) {
 
-  private def scan: Future[Unit] = {
+  private def scan: Future[List[String]] = {
+    cli.printWarningWithTime("Attempting zone transfer on authoritative name servers:")
+
     val dnsLookup = DNSLookup.forHostname(hostname)
 
     dnsLookup.hostIsValid().flatMap {
@@ -16,12 +18,12 @@ class AuthoritativeScanner(private val hostname: String, private val cli: CLIOut
         beginScan(dnsLookup)
       } else {
         cli.printErrorWithTime(s"Error: $hostname has no DNS records.")
-        Future()
+        Future(List.empty)
       }
     }
   }
 
-  private def beginScan(dnsLookup: DNSLookup): Future[Unit] = {
+  private def beginScan(dnsLookup: DNSLookup): Future[List[String]] = {
     dnsLookup.authoritativeNameServers()
       .andThen {
         case nameServers =>
@@ -29,8 +31,10 @@ class AuthoritativeScanner(private val hostname: String, private val cli: CLIOut
       }
       .flatMap(performZoneTransfers)
       .map(convertRecordDatasToSubdomains)
+      .map(filterOutOtherHosts)
       .map(sortRecordsByName)
       .map(printFoundRecords)
+      .map(convertRecordsToSubdomains)
   }
 
   private def printAuthoritativeNameServers(nameServers: List[String]) =
@@ -59,15 +63,34 @@ class AuthoritativeScanner(private val hostname: String, private val cli: CLIOut
   private def convertRecordDataToSubdomain(record: Record): Record =
     Record(record.recordType, record.name.split(" ").head.stripSuffix(".").trim.toLowerCase)
 
+  private def filterOutOtherHosts(records: Set[Record]): Set[Record] =
+    records.filter(_.name.endsWith(hostname))
+
   private def sortRecordsByName(records: Set[Record]): List[Record] =
     records.toList.sortBy(_.name)
 
-  private def printFoundRecords(records: List[Record]): Unit =
-    records.foreach(cli.printFoundRecord)
+  private def printFoundRecords(records: List[Record]): List[Record] = {
+    convertRecordsToSubdomains(records)
+      .toSet
+      .foreach((subdomain: String) => cli.printFoundSubdomain(subdomain, recordTypesForSubdomainInRecords(subdomain, records)))
+    cli.printLineToCLI()
+
+    records
+  }
+
+  private def recordTypesForSubdomainInRecords(subdomain: String, records: List[Record]): List[String] =
+    records
+      .filter(_.name == subdomain)
+      .map(_.recordType)
+      .distinct
+
+  private def convertRecordsToSubdomains(records: List[Record]): List[String] =
+    records.map(_.name)
+
 }
 
 object AuthoritativeScanner {
-  def performScan(hostname: String, cli: CLIOutput): Future[Unit] = {
+  def performScan(hostname: String, cli: CLIOutput): Future[List[String]] = {
     val scanner = new AuthoritativeScanner(hostname, cli)
     scanner.scan
   }

@@ -1,6 +1,8 @@
 package utils
 
 import java.time._
+import akka.util.Timeout
+import scala.concurrent.duration._
 
 object TimeUtils {
   def currentTimeForCLI: String = {
@@ -11,4 +13,10 @@ object TimeUtils {
 
     s"[$hour:$minute:$second]"
   }
+
+  def akkaAskTimeout: Timeout =
+    Timeout(FiniteDuration(21474835, "seconds"))
+
+  def awaitDuration: FiniteDuration =
+    365.days
 }
