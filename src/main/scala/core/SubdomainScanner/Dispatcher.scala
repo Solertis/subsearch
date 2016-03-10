@@ -5,11 +5,13 @@ import core.subdomainscanner.DispatcherMessage._
 import core.subdomainscanner.ListenerMessage._
 import core.subdomainscanner.ScannerMessage.{Scan, ScanAvailable}
 
+import scala.concurrent.ExecutionContext
+
 object Dispatcher {
-  def props(listener: ActorRef, hostname: String, threads: Int, subdomains: List[String], resolvers: List[String]): Props =
+  def props(listener: ActorRef, hostname: String, threads: Int, subdomains: List[String], resolvers: List[String])(implicit ec: ExecutionContext): Props =
     Props(new Dispatcher(listener, hostname: String, threads, subdomains, resolvers))
 
-  private def createScanners(context: ActorContext, listener: ActorRef, threads: Int, hostname: String): Set[ActorRef] =
+  private def createScanners(context: ActorContext, listener: ActorRef, threads: Int, hostname: String)(implicit ec: ExecutionContext): Set[ActorRef] =
     Vector.fill(threads) {
       val scanner = context.actorOf(Scanner.props(listener, hostname))
       context.watch(scanner)
@@ -21,7 +23,7 @@ class Dispatcher(listener: ActorRef,
                  hostname: String,
                  threads: Int,
                  subdomains: List[String],
-                 resolvers: List[String]) extends Actor {
+                 resolvers: List[String])(implicit ec: ExecutionContext) extends Actor {
 
   var master: Option[ActorRef] = None
 
@@ -54,6 +56,10 @@ class Dispatcher(listener: ActorRef,
       subdomainHasBeenScanned(subdomain)
       dispatcherQueue.recycleResolver(resolver)
       scannerIsAvailableToScan(sender)
+
+    case FailedScan(subdomain, resolver) =>
+      dispatcherQueue.requeueSubdomain(subdomain)
+      // TODO: What do we do with the resolver?
 
     case AvailableForScan =>
       scannerIsAvailableToScan(sender)

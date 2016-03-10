@@ -1,6 +1,7 @@
 package core.subdomainscanner
 
 import scala.collection.mutable
+import scala.util.Random
 
 object DispatcherQueue {
   def create(subdomains: List[String], resolvers: List[String]): DispatcherQueue =
@@ -12,7 +13,7 @@ class DispatcherQueue(private val subdomains: List[String], private val resolver
 
   private val subdomainsQueue: mutable.Queue[String] = mutable.Queue() ++= subdomains
   private val prioritySubdomainsQueue: mutable.Queue[String] = mutable.Queue()
-  private val resolversQueue: mutable.Queue[String] = mutable.Queue() ++= resolvers.toSet
+  private val resolversQueue: mutable.Queue[String] = mutable.Queue() ++= Random.shuffle(resolvers).toSet
 
   def remainingNumberOfSubdomains: Int = subdomainsQueue.size + prioritySubdomainsQueue.size
   def remainingNumberOfResolvers: Int = resolversQueue.size

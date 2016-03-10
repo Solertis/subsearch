@@ -20,3 +20,4 @@ TODO: Show CNAME records pointers
 TODO: Create reporting framework
 TODO: Sanitise all command line data prior to *anything*
 TODO: Implement multiple URLs
+TODO: Change execution context to be imported from an object
