@@ -12,30 +12,31 @@ class DNSLookup(private val hostname: String, private val resolvers: List[String
   private val resolver: ExtendedResolver = new ExtendedResolver(resolvers.toArray)
 
   def hostIsValid(): Future[Boolean] =
-    queryANY().map(_.nonEmpty)
+    queryANY().map(_.getOrElse(List.empty).nonEmpty)
 
-  def queryANY(): Future[List[Record]] = queryANY(hostname)
-  private def queryANY(hostname: String): Future[List[Record]] = queryType(Type.ANY, hostname)
+  def queryANY(): Future[Try[List[Record]]] = queryANY(hostname)
+  private def queryANY(hostname: String): Future[Try[List[Record]]] = queryType(Type.ANY, hostname)
 
-  def queryNS(): Future[List[String]] = queryNS(hostname)
-  private def queryNS(hostname: String): Future[List[String]] = queryType(Type.NS, hostname).map(recordsToData)
+  def queryNS(): Future[Try[List[String]]] = queryNS(hostname)
+  private def queryNS(hostname: String): Future[Try[List[String]]] = queryType(Type.NS, hostname).map(recordsToData)
 
-  def queryA(): Future[List[String]] = queryA(hostname)
-  private def queryA(hostname: String): Future[List[String]] = queryType(Type.A, hostname).map(recordsToData)
+  def queryA(): Future[Try[List[String]]] = queryA(hostname)
+  private def queryA(hostname: String): Future[Try[List[String]]] = queryType(Type.A, hostname).map(recordsToData)
 
-  private def queryType(recordType: Int, name: String): Future[List[Record]] = {
+  private def queryType(recordType: Int, name: String): Future[Try[List[Record]]] = {
     Future {
       val lookup = new Lookup(name, recordType)
       lookup.setResolver(resolver)
-
-      Option(lookup.run())
-        .getOrElse(Array.empty)
-        .toList
-        .map(dnsRecord => Record(Type.string(dnsRecord.getType), dnsRecord.rdataToString()))
+      Try {
+        Option(lookup.run())
+          .getOrElse(Array.empty)
+          .toList
+          .map(dnsRecord => Record(Type.string(dnsRecord.getType), dnsRecord.rdataToString()))
+      }
     }
   }
 
-  private def recordsToData(records: List[Record]): List[String] = records.map(_.name)
+  private def recordsToData(records: Try[List[Record]]): Try[List[String]] = Try(records.get.map(_.name))
 
   def zoneTransfer(): Future[List[Record]] = {
     if (resolvers.size != 1)
@@ -60,10 +61,10 @@ class DNSLookup(private val hostname: String, private val resolvers: List[String
   }
 
   def authoritativeNameServers(): Future[List[String]] =
-    queryNS().flatMap(nameServersToIPs)
+    queryNS().map(_.getOrElse(List.empty)).flatMap(nameServersToIPs)
 
   private def nameServersToIPs(nameServers: List[String]): Future[List[String]] =
-    Future.sequence(nameServers.map(_.stripSuffix(".").trim).map(queryA)).map(_.flatten)
+    Future.sequence(nameServers.map(_.stripSuffix(".").trim).map(queryA).map(_.map(_.getOrElse(List.empty)))).map(_.flatten)
 }
 
 object DNSLookup {
@@ -78,4 +79,7 @@ object DNSLookup {
   def forHostnameAndResolvers(hostname: String, resolvers: List[String]): DNSLookup = {
     new DNSLookup(hostname, resolvers)
   }
+
+  def isResolver(resolver: String): Future[Boolean] =
+    Future(Try(new SimpleResolver(resolver)).isSuccess)
 }

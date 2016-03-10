@@ -2,6 +2,8 @@ package core.subdomainscanner
 
 import connection.DNSLookup.Record
 
+import scala.util.Try
+
 trait Message
 
 object DispatcherMessage extends Message {
@@ -11,14 +13,15 @@ object DispatcherMessage extends Message {
   case object AvailableForScan
 
   case class PriorityScanSubdomain(subdomain: String)
-  case class CompletedScan(subdomainScanned: String, resolverUsed: String)
+  case class CompletedScan(subdomain: String, resolver: String)
+  case class FailedScan(subdomain: String, resolver: String)
 }
 
 object ScannerMessage extends Message {
   case object ScanAvailable
 
   case class Scan(subdomain: String, resolver: String)
-  case class ScanComplete(records: List[Record], subdomain: String, resolver: String)
+  case class ScanComplete(records: Try[List[Record]], subdomain: String, resolver: String)
 }
 
 object ListenerMessage extends Message {
