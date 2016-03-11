@@ -8,8 +8,8 @@ import core.subdomainscanner.ScannerMessage.{Scan, ScanAvailable}
 import scala.concurrent.ExecutionContext
 
 object Dispatcher {
-  def props(listener: ActorRef, hostname: String, threads: Int, subdomains: List[String], resolvers: List[String])(implicit ec: ExecutionContext): Props =
-    Props(new Dispatcher(listener, hostname: String, threads, subdomains, resolvers))
+  def props(arguments: SubdomainScannerArguments, listener: ActorRef)(implicit ec: ExecutionContext): Props =
+    Props(new Dispatcher(arguments, listener))
 
   private def createScanners(context: ActorContext, listener: ActorRef, threads: Int, hostname: String)(implicit ec: ExecutionContext): Set[ActorRef] =
     Vector.fill(threads) {
@@ -19,26 +19,20 @@ object Dispatcher {
     }.toSet
 }
 
-class Dispatcher(listener: ActorRef,
-                 hostname: String,
-                 threads: Int,
-                 subdomains: List[String],
-                 resolvers: List[String])(implicit ec: ExecutionContext) extends Actor {
-
+class Dispatcher(arguments: SubdomainScannerArguments, listener: ActorRef)(implicit ec: ExecutionContext) extends Actor {
   var master: Option[ActorRef] = None
 
   var pauseScanning = false
   var numberOfPausedScanners = 0
   var whoToNotifyAboutPaused: Option[ActorRef] = None
 
-  val dispatcherQueue: DispatcherQueue = DispatcherQueue.create(subdomains, resolvers)
+  val dispatcherQueue: DispatcherQueue = DispatcherQueue.create(arguments.subdomains, arguments.resolvers, arguments.concurrentResolverRequests)
 
   var scansSoFar: Int = 0
-  var scansInTotal: Int = subdomains.size
 
   var currentlyScanning: Set[String] = Set.empty
 
-  var scannerRefs: Set[ActorRef] = Dispatcher.createScanners(context, listener, threads, hostname)
+  var scannerRefs: Set[ActorRef] = Dispatcher.createScanners(context, listener, arguments.threads, arguments.hostname)
   scannerRefs.foreach(_ ! ScanAvailable)
 
   def receive = {
@@ -75,10 +69,7 @@ class Dispatcher(listener: ActorRef,
 
       if (scanningHasNotBeenPaused && allScannersHaveTerminated) {
         if (allSubdomainsHaveBeenScanned) {
-          if (master.isDefined) master.get ! None
-          else listener ! PrintError("The dispatcher doesn't know who to notify of completion! Terminating anyway.")
-
-          context.system.terminate()
+          listener ! TaskCompleted(master)
         } else {
           // Add any missed subdomains back to the queue
           currentlyScanning.foreach(_ => dispatcherQueue.requeueSubdomain(_))
@@ -87,10 +78,10 @@ class Dispatcher(listener: ActorRef,
           // Start scanning again.
           val numberOfScannersToCreate: Int =
             Array(dispatcherQueue.remainingNumberOfSubdomains,
-              dispatcherQueue.remainingNumberOfResolvers,
-              threads).min
+                  dispatcherQueue.remainingNumberOfResolvers,
+                  arguments.threads).min
 
-          scannerRefs = Dispatcher.createScanners(context, listener, numberOfScannersToCreate, hostname)
+          scannerRefs = Dispatcher.createScanners(context, listener, numberOfScannersToCreate, arguments.hostname)
           scannerRefs.foreach(_ ! ScanAvailable)
         }
       }
@@ -109,20 +100,16 @@ class Dispatcher(listener: ActorRef,
       val resolver = dispatcherQueue.dequeueResolver()
       val subdomain = dispatcherQueue.dequeueSubdomain()
 
-      doScan(sender, subdomain, resolver)
+      scanningSubdomain(subdomain)
+      sender ! Scan(subdomain, resolver)
+      scansSoFar += 1
+      listener ! LastScan(subdomain, scansSoFar, dispatcherQueue.totalNumberOfSubdomains)
 
     } else {
       // We don't have enough resolvers to go around. Stop this scanner from working
-      listener ! PrintWarning(s"There aren't enough resolvers for each thread. Reducing thread count by 1.")
+      listener ! NotEnoughResolvers
       terminateScanner(scanner)
     }
-  }
-
-  def doScan(ref: ActorRef, subdomain: String, resolver: String) = {
-    scanningSubdomain(subdomain)
-    ref ! Scan(subdomain, resolver)
-    scansSoFar += 1
-    listener ! LastScan(subdomain, scansSoFar, scansInTotal)
   }
 
   // Keeping track of subdomains currently being scanned

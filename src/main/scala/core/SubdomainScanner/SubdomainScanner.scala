@@ -6,7 +6,7 @@ import utils.TimeUtils
 
 import akka.actor.ActorSystem
 import akka.pattern.ask
-import scala.concurrent.{ExecutionContext, Await, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 case class SubdomainScannerArguments(hostname: String,
                                      subdomains: List[String],
@@ -18,9 +18,7 @@ object SubdomainScanner {
   def performScan(arguments: SubdomainScannerArguments, cli: CLIOutput)(implicit ec: ExecutionContext): Future[Unit] = {
     cli.printWarningWithTime("Starting subdomain search:")
     val scanner: SubdomainScanner = new SubdomainScanner(arguments, cli)
-    scanner
-      .future
-      .map(_ => cli.printTaskCompleted())
+    scanner.future.map(_ => None)
   }
 }
 

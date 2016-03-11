@@ -37,7 +37,9 @@ class CLIOutput {
   }
 
   def printTaskCompleted() = {
-    printLineToCLI("\nTask Completed".yellow.bold)
+    printLineToCLI()
+    printLineToCLI("Task Completed".yellow.bold)
+    printLineToCLI()
   }
 
   private def prependTime(string: String): String =

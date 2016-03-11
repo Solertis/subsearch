@@ -18,4 +18,3 @@ TODO: Show A, AAAA records IP addresses
 TODO: Show CNAME records pointers
 TODO: Create reporting framework
 TODO: Change execution context to be imported from an object
-TODO: Ensure last few discovered subdomains apear before "Task Completed"
