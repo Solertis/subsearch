@@ -12,12 +12,10 @@ The application flow is as follows:
     - Dispatcher: Creates all scanners and delegates work to each. Maintains a queue of subdomains, priority subdomains, and resolvers.
     - Scanner: This does the actual lookup.
 
-TODO: Implement flag to allow multiple scans to use the same resolver
 TODO: Implement lookup/scanner failure functionality
 TODO: Implement scanner timeout functionality
 TODO: Show A, AAAA records IP addresses
 TODO: Show CNAME records pointers
 TODO: Create reporting framework
-TODO: Sanitise all command line data prior to *anything*
-TODO: Implement multiple URLs
 TODO: Change execution context to be imported from an object
+TODO: Ensure last few discovered subdomains apear before "Task Completed"

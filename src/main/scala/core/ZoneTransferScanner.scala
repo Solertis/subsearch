@@ -57,7 +57,7 @@ class ZoneTransferScanner(hostname: String, nameServers: List[String], cli: CLIO
       .foreach((subdomain: String) => cli.printFoundSubdomain(subdomain, recordTypesForSubdomainInRecords(subdomain, records)))
 
     if (records.isEmpty)
-      cli.printInfoWithTime("Name servers aren't vulnerable to zone transfer.")
+      cli.printInfoWithTime("Name servers aren't vulnerable to zone transfer")
 
     cli.printLineToCLI()
 

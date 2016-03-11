@@ -1,11 +1,13 @@
 package core
 
 import scopt.OptionParser
-import utils.File
+import utils.{IPUtils, SubdomainUtils, File}
 
-case class Arguments(hostname: String = "",
-                     wordlist: File = File.fromFilename("wordlist.txt"),
-                     resolvers: File = File.fromFilename("resolvers.txt"),
+case class Arguments(hostnames: List[String] = List.empty,
+                     subdomains: List[String] = List.empty,
+                     resolvers: List[String] = List.empty,
+                     includeAuthoritativeNameServersWithResolvers: Boolean = false,
+                     concurrentResolverRequests: Boolean = false,
                      threads: Int = 10,
                      skipZoneTransfer: Boolean = false)
 
@@ -17,10 +19,26 @@ private class ArgumentParser(private val args: Array[String]) {
     note("Mandatory:")
 
     opt[String]('h', "hostname")
-      .required()
       .valueName("HOSTNAME")
-      .text("The hostname to scan for subdomains.")
-      .action { (argument, config) => config.copy(hostname = argument) }
+      .text("The hostname(s) to scan. Enter more than one by separating with a comma.")
+      .action {
+        (argument, config) =>
+          val hostnames = argument.split(",").toList.map(SubdomainUtils.normalise)
+          hostnames.foreach(verifyHostname)
+          config.copy(hostnames = hostnames)
+      }
+    note("and/or")
+    opt[String]('H', "hostlist")
+      .valueName("HOSTLIST")
+      .text("A file containing a newline delimited list of hostnames to scan.")
+      .action {
+        (argument, config) =>
+          val file: File = File.fromFilename(argument)
+          verifyFile(file, "hostlist")
+          val hostnames = file.getLines.map(SubdomainUtils.normalise)
+          hostnames.foreach(verifyHostname)
+          config.copy(hostnames = (config.hostnames ++ hostnames).distinct)
+      }
 
     opt[String]('w', "wordlist")
       .required()
@@ -30,21 +48,49 @@ private class ArgumentParser(private val args: Array[String]) {
         (argument, config) =>
           val file: File = File.fromFilename(argument)
           verifyFile(file, "wordlist")
-          config.copy(wordlist = file)
+          val subdomains = file.getLines.map(SubdomainUtils.normalise)
+          subdomains.foreach(verifySubdomain)
+          config.copy(subdomains = subdomains)
       }
 
     opt[String]('r', "resolvers")
-      .required()
       .valueName("RESOLVERS")
-      .text("A newline delimited list of name servers.")
+      .text("The name server(s) to scan with. Enter more than one by separating with a comma.")
+      .action {
+        (argument, config) =>
+          val resolvers = argument.split(",").toList.map(IPUtils.normalise)
+          resolvers.foreach(verifyResolver)
+          config.copy(resolvers = resolvers)
+      }
+    note("and/or")
+    opt[String]('R', "resolverslist")
+      .valueName("RESOLVERSLIST")
+      .text("A file containing a newline delimited list of name servers to scan with.")
       .action {
         (argument, config) =>
           val file: File = File.fromFilename(argument)
-          verifyFile(file, "resolvers")
-          config.copy(resolvers = File.fromFilename(argument))
+          verifyFile(file, "resolvers list")
+          val resolvers = file.getLines.map(IPUtils.normalise)
+          resolvers.foreach(verifyResolver)
+          config.copy(resolvers = (config.resolvers ++ resolvers).distinct)
       }
 
+    note("")
     note("Optional:")
+
+    opt[Unit]('a', "auth-resolvers")
+      .text("Include the hostname's authoritative name servers in the list of resolvers. Defaults to false.")
+      .action {
+        (argument, config) =>
+          config.copy(includeAuthoritativeNameServersWithResolvers = true)
+      }
+
+    opt[Unit]('c', "concurrent-resolver-requests")
+      .text("Allow for more than one request to each resolver at the same time. If true, it can result in being blacklisted or rate limited by some resolvers. Defaults to false.")
+      .action {
+        (argument, config) =>
+          config.copy(concurrentResolverRequests = true)
+      }
 
     opt[Int]('t', "threads")
       .valueName("THREADCOUNT")
@@ -62,11 +108,24 @@ private class ArgumentParser(private val args: Array[String]) {
           config.copy(skipZoneTransfer = true)
       }
 
+    note("")
     note("Help:")
 
     help("help")
       .text("Prints this usage text.")
   }
+
+  def verifyHostname(hostname: String) =
+    if (!SubdomainUtils.isValid(hostname))
+      printErrorThenExit("The hostname '$hostname' is invalid.")
+
+  def verifySubdomain(subdomain: String) =
+    if (!SubdomainUtils.isValid(subdomain))
+      printErrorThenExit("The subdomain '$subdomain' is invalid.")
+
+  def verifyResolver(resolver: String) =
+    if (!IPUtils.isValid(resolver))
+      printErrorThenExit("The resolver '$resolver' is not a valid IPv4 address.")
 
   def verifyFile(file: File, description : String) = {
     if (!file.exists)
@@ -85,6 +144,7 @@ private class ArgumentParser(private val args: Array[String]) {
   def parse(): Arguments =
     parser.parse(args, Arguments()) match {
       case Some(arguments) =>
+        postVerifyArguments(arguments)
         arguments
       case None =>
         System.exit(1)
@@ -94,6 +154,15 @@ private class ArgumentParser(private val args: Array[String]) {
   private def printErrorThenExit(message: String) = {
     println("Error: " + message)
     System.exit(1)
+  }
+
+  private def postVerifyArguments(arguments: Arguments) = {
+    if (arguments.hostnames.isEmpty)
+      printErrorThenExit("At least one hostname must be specified.")
+    if (arguments.subdomains.isEmpty)
+      printErrorThenExit("The wordlist cannot be empty.")
+    if (arguments.resolvers.isEmpty)
+      printErrorThenExit("At least one resolver must be specified.")
   }
 
 }

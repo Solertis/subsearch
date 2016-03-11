@@ -4,12 +4,11 @@ import java.util.concurrent.Executors
 
 import connection.DNSLookup
 import core.{ZoneTransferScanner, AuthoritativeScanner, Arguments}
-import core.subdomainscanner.SubdomainScanner
+import core.subdomainscanner.{SubdomainScannerArguments, SubdomainScanner}
 
 import output.CLIOutput
-import utils.FileUtils
+import utils.{SubdomainUtils, TimeUtils, FileUtils}
 import scala.concurrent.{ExecutionContext, Await, Future}
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object Controller {
@@ -27,7 +26,10 @@ class Controller(private val arguments: Arguments, private val cli: CLIOutput) {
   def initialise() = {
     printBanner()
     printConfig()
-    Await.result(runScanForHostname(arguments.hostname), 365.days)
+
+    arguments.hostnames.foreach {
+      hostname => Await.result(runScanForHostname(hostname), TimeUtils.awaitDuration)
+    }
   }
 
   def printBanner() = {
@@ -42,8 +44,8 @@ class Controller(private val arguments: Arguments, private val cli: CLIOutput) {
   }
 
   def printConfig() = {
-    val wordlistSize = arguments.wordlist.numberOfLines
-    val resolversSize = arguments.resolvers.numberOfLines
+    val wordlistSize = arguments.subdomains.size
+    val resolversSize = arguments.resolvers.size
 
     cli.printConfig(arguments.threads, wordlistSize, resolversSize)
   }
@@ -65,19 +67,28 @@ class Controller(private val arguments: Arguments, private val cli: CLIOutput) {
     val executorService = Executors.newFixedThreadPool(arguments.threads)
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutorService(executorService)
 
-    val authoritativeNameServers: Future[List[String]] = AuthoritativeScanner.performScan(hostname, cli)
+    val authoritativeNameServers: List[String] = Await.result(AuthoritativeScanner.performScan(hostname, cli), TimeUtils.awaitDuration)
 
-    val zoneTransferResults: Future[(List[String], List[String])] =
-      authoritativeNameServers.flatMap {
-        nameServers =>
-          if (!arguments.skipZoneTransfer)
-            ZoneTransferScanner
-              .attemptScan(hostname, nameServers, cli)
-              .map(results => (nameServers, results))
-          else
-            Future((nameServers, List.empty))
-      }
+    val zoneTransferSubdomains: List[String] =
+      if (arguments.skipZoneTransfer) List.empty
+      else Await.result(ZoneTransferScanner.attemptScan(hostname, authoritativeNameServers, cli), TimeUtils.awaitDuration)
 
-    zoneTransferResults.flatMap((results: (List[String], List[String])) => SubdomainScanner.performScan(arguments, results._1, results._2, cli))
+    val subdomains =
+      arguments.subdomains
+        .map(subdomain => SubdomainUtils.ensureSubdomainEndsWithHostname(subdomain, hostname))
+        .diff(zoneTransferSubdomains)
+
+    if (arguments.includeAuthoritativeNameServersWithResolvers) {
+      cli.printWarningWithTime("Adding authoritative name servers to list of resolvers")
+      cli.printLineToCLI()
+    }
+
+    val resolvers =
+      if (arguments.includeAuthoritativeNameServersWithResolvers) (arguments.resolvers ++ authoritativeNameServers).distinct
+      else arguments.resolvers
+
+    val subdomainScannerArguments = SubdomainScannerArguments(hostname, subdomains, resolvers, arguments.threads, arguments.concurrentResolverRequests)
+
+    SubdomainScanner.performScan(subdomainScannerArguments, cli)
   }
 }
