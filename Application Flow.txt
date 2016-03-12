@@ -14,7 +14,6 @@ The application flow is as follows:
 
 TODO: Implement lookup/scanner failure functionality
 TODO: Implement scanner timeout functionality
-TODO: Show A, AAAA records IP addresses
-TODO: Show CNAME records pointers
 TODO: Create reporting framework
 TODO: Change execution context to be imported from an object
+TODO: Follow subdomains from records other then CNAME

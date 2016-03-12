@@ -4,7 +4,7 @@ import output.CLIOutput
 
 class SubSearch(args: Array[String]) {
   val arguments: Arguments = ArgumentParser.parseArguments(args)
-  val cli: CLIOutput = CLIOutput.create()
+  val cli: CLIOutput = CLIOutput.create(arguments.extendedOutput)
   val controller: Controller = Controller.create(arguments, cli)
 }
 

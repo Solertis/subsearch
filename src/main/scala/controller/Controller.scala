@@ -57,7 +57,7 @@ class Controller(private val arguments: Arguments, private val cli: CLIOutput) {
       if (_) {
         runScanners(hostname)
       } else {
-        cli.printErrorWithTime(s"$hostname has no DNS records.")
+        cli.printError(s"$hostname has no DNS records.")
         Future()
       }
     }

@@ -8,6 +8,7 @@ case class Arguments(hostnames: List[String] = List.empty,
                      resolvers: List[String] = List.empty,
                      includeAuthoritativeNameServersWithResolvers: Boolean = false,
                      concurrentResolverRequests: Boolean = false,
+                     extendedOutput: Boolean = false,
                      threads: Int = 10,
                      skipZoneTransfer: Boolean = false)
 
@@ -99,6 +100,13 @@ private class ArgumentParser(private val args: Array[String]) {
         (threads, config) =>
           verifyThreads(threads)
           config.copy(threads = threads)
+      }
+
+    opt[Unit]('v', "verbose")
+      .text("Show more extended command line output such as the addresses that A, AAAA and CNAME records point to. Defaults to false.")
+      .action {
+        (argument, config) =>
+          config.copy(extendedOutput = true)
       }
 
     opt[Unit]('z', "no-zone-transfer")

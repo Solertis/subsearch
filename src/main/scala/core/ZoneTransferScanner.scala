@@ -1,7 +1,6 @@
 package core
 
-import connection.DNSLookup
-import connection.DNSLookup.Record
+import connection.{Record, DNSLookup}
 import output.CLIOutput
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -15,7 +14,7 @@ class ZoneTransferScanner(hostname: String, nameServers: List[String], cli: CLIO
       cli.printWarningWithTime("Attempting zone transfer:")
 
     performZoneTransfers(nameServers)
-      .map(convertRecordDatasToSubdomains)
+      .map(_.distinct)
       .map(filterOutOtherHosts)
       .map(sortRecordsByName)
       .map(printFoundRecords)
@@ -39,36 +38,21 @@ class ZoneTransferScanner(hostname: String, nameServers: List[String], cli: CLIO
       }
   }
 
-  private def convertRecordDatasToSubdomains(records: List[Record]): Set[Record] =
-    records.toSet.map(convertRecordDataToSubdomain)
-
-  private def convertRecordDataToSubdomain(record: Record): Record =
-    Record(record.recordType, record.name.split(" ").head.stripSuffix(".").trim.toLowerCase)
-
-  private def filterOutOtherHosts(records: Set[Record]): Set[Record] =
+  private def filterOutOtherHosts(records: List[Record]): List[Record] =
     records.filter(_.name.endsWith(hostname))
 
-  private def sortRecordsByName(records: Set[Record]): List[Record] =
-    records.toList.sortBy(_.name)
+  private def sortRecordsByName(records: List[Record]): List[Record] =
+    records.sortBy(_.name)
 
   private def printFoundRecords(records: List[Record]): List[Record] = {
-    convertRecordsToSubdomains(records)
-      .toSet
-      .foreach((subdomain: String) => cli.printFoundSubdomain(subdomain, recordTypesForSubdomainInRecords(subdomain, records)))
-
     if (records.isEmpty)
       cli.printInfoWithTime("Name servers aren't vulnerable to zone transfer")
 
+    cli.printRecords(records)
     cli.printLineToCLI()
 
     records
   }
-
-  private def recordTypesForSubdomainInRecords(subdomain: String, records: List[Record]): List[String] =
-    records
-      .filter(_.name == subdomain)
-      .map(_.recordType)
-      .distinct
 
   private def convertRecordsToSubdomains(records: List[Record]): List[String] =
     records.map(_.name)

@@ -1,10 +1,11 @@
 package output
 
+import connection.Record
 import pl.project13.scala.rainbow.Rainbow._
 import utils.TimeUtils
 import scala.tools.jline._
 
-class CLIOutput {
+class CLIOutput(private val extendedOutput: Boolean) {
   val terminal = TerminalFactory.create()
 
   def printLineToCLI(string: String): Unit =
@@ -75,6 +76,66 @@ class CLIOutput {
   def printInternalError(string: String) =
     printLineToCLI(string.red)
 
+  private var allRecords: List[Record] = List.empty
+
+  def printRecords(newRecords: List[Record]) = {
+    val records =
+      newRecords
+        .filter(dnsRecord => !List("NSEC", "RRSIG", "SOA").contains(dnsRecord.recordType))
+        .diff(allRecords)
+
+    if (extendedOutput) {
+      records
+        .map(_.name)
+        .distinct
+        .sorted
+        .foreach {
+          subdomain =>
+            val subdomainRecords: List[Record] = records.filter(_.name == subdomain)
+            val recordTypes: List[String] = subdomainRecords.map(_.recordType).distinct.sorted
+
+            recordTypes.foreach {
+              recordType =>
+                subdomainRecords.filter(_.recordType == recordType).foreach {
+                  case Record(_, _, data) =>
+                    val msg = prependTime(f"$recordType%-7s:  $subdomain").green
+
+                    if (List("A", "AAAA", "CNAME", "NS", "SRV").contains(recordType))
+                      printLineToCLI(s"$msg  ->  $data")
+                    else if (recordType == "MX")
+                      printLineToCLI(s"$msg  @@  $data")
+                    else
+                      printLineToCLI(s"$msg  --  $data")
+                }
+            }
+        }
+
+    } else {
+      records
+        .map(_.name)
+        .distinct
+        .sorted
+        .map(subdomain => (subdomain, recordTypesForSubdomainInRecords(subdomain, records)))
+        .foreach {
+          (data: (String, List[String])) =>
+            printSuccessWithTime(s"${data._2.sorted.mkString(", ")}:  ${data._1}")
+        }
+    }
+
+    allRecords = allRecords ++ records
+  }
+
+  def printFoundRecordsDuringScan(records: List[Record]) = {
+    eraseLine()
+    printRecords(records)
+  }
+
+  private def recordTypesForSubdomainInRecords(subdomain: String, records: List[Record]): List[String] =
+    records
+      .filter(_.name == subdomain)
+      .map(_.recordType)
+      .distinct
+
   def printFoundSubdomain(subdomain: String, recordTypes: List[String]) =
     printSuccessWithTime(s"${recordTypes.sorted.mkString(", ")}  -  $subdomain")
 
@@ -112,6 +173,6 @@ class CLIOutput {
 }
 
 object CLIOutput {
-  def create(): CLIOutput =
-    new CLIOutput()
+  def create(extendedOutput: Boolean): CLIOutput =
+    new CLIOutput(extendedOutput: Boolean)
 }

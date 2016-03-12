@@ -1,5 +1,7 @@
 package connection
 
+import java.util
+
 import org.xbill.DNS._
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -7,8 +9,6 @@ import scala.collection.JavaConverters._
 import scala.util.Try
 
 class DNSLookup(private val hostname: String, private val resolvers: List[String]) {
-  import DNSLookup.Record
-
   private val resolver: ExtendedResolver = new ExtendedResolver(resolvers.toArray)
 
   def hostIsValid(): Future[Boolean] =
@@ -31,12 +31,12 @@ class DNSLookup(private val hostname: String, private val resolvers: List[String
         Option(lookup.run())
           .getOrElse(Array.empty)
           .toList
-          .map(dnsRecord => Record(Type.string(dnsRecord.getType), dnsRecord.rdataToString()))
+          .map(dnsRecord => Record(Type.string(dnsRecord.getType), dnsRecord.getName.toString, dnsRecord.rdataToString))
       }
     }
   }
 
-  private def recordsToData(records: Try[List[Record]]): Try[List[String]] = Try(records.get.map(_.name))
+  private def recordsToData(records: Try[List[Record]]): Try[List[String]] = Try(records.get.map(_.data))
 
   def zoneTransfer(): Future[List[Record]] = {
     if (resolvers.size != 1)
@@ -46,13 +46,12 @@ class DNSLookup(private val hostname: String, private val resolvers: List[String
       val transfer: ZoneTransferIn = ZoneTransferIn.newAXFR(new Name(hostname), resolvers.head, null)
 
       val records: Try[List[Record]] = Try {
-        transfer
-          .run()
+        Option(transfer.run())
+          .getOrElse(new util.ArrayList())
           .asScala
           .toList
           .asInstanceOf[List[org.xbill.DNS.Record]]
-          .map(dnsRecord => Record(Type.string(dnsRecord.getType), dnsRecord.getName.toString))
-          .filter(dnsRecord => !List("NSEC", "RRSIG").contains(dnsRecord.recordType))
+          .map(dnsRecord => Record(Type.string(dnsRecord.getType), dnsRecord.getName.toString, dnsRecord.rdataToString))
           .filter(dnsRecord => !dnsRecord.name.startsWith(hostname))
       }
 
@@ -68,8 +67,6 @@ class DNSLookup(private val hostname: String, private val resolvers: List[String
 }
 
 object DNSLookup {
-  case class Record(recordType: String, name: String)
-
   def forHostname(hostname: String): DNSLookup =
     DNSLookup.forHostnameAndResolvers(hostname, List("8.8.8.8", "8.8.4.4"))
 
@@ -82,4 +79,23 @@ object DNSLookup {
 
   def isResolver(resolver: String): Future[Boolean] =
     Future(Try(new SimpleResolver(resolver)).isSuccess)
+}
+
+class Record private (val recordType: String, val name: String, val data: String)
+
+object Record {
+  def apply(recordType: String, name: String, data: String): Record = {
+    val importantData =
+      if (recordType == "CNAME")
+        data.stripSuffix(".").trim
+      else if (recordType == "SRV")
+        data.split(" ")(3).stripSuffix(".").trim
+      else
+        data
+
+    new Record(recordType, name.stripSuffix(".").trim, importantData)
+  }
+
+  def unapply(record: Record): Option[(String, String, String)] =
+    Some((record.recordType, record.name, record.data))
 }
