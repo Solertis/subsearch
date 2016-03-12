@@ -2,7 +2,7 @@ package core.subdomainscanner
 
 import core.subdomainscanner.ScannerMessage._
 import core.subdomainscanner.DispatcherMessage.{FailedScan, AvailableForScan, CompletedScan, PriorityScanSubdomain}
-import core.subdomainscanner.ListenerMessage.{PrintError, FoundSubdomain, LogError}
+import core.subdomainscanner.ListenerMessage.{PrintWarning, FoundSubdomain}
 
 import akka.actor.{Actor, Props, ActorRef}
 import connection.DNSLookup
@@ -41,17 +41,16 @@ class Scanner(listener: ActorRef, hostname: String)(implicit ec: ExecutionContex
         records
           .filter(_.recordType == "CNAME")
           .map(_.name)
-          .map(_.stripSuffix(".").trim)
           .filter(_.endsWith(hostname))
-          .toSet
+          .distinct
           .foreach((subdomain: String) => context.parent ! PriorityScanSubdomain(subdomain))
 
         context.parent ! CompletedScan(subdomain, resolver)
       } else {
-        listener ! PrintError(s"Failed to lookup $subdomain with $resolver: ${recordsAttempt.failed.get.getMessage}")
+//        listener ! PrintError(s"Failed to lookup $subdomain with $resolver: ${recordsAttempt.failed.get.getMessage}")
         context.parent ! FailedScan(subdomain, resolver)
       }
 
-    case e @ _ => listener ! LogError(s"Unknown message $e received by scanner from $sender")
+    case e @ _ => listener ! PrintWarning(s"Unknown message $e received by scanner from $sender")
   }
 }

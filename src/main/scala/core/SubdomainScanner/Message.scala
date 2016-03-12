@@ -1,7 +1,7 @@
 package core.subdomainscanner
 
 import akka.actor.ActorRef
-import connection.DNSLookup.Record
+import connection.Record
 import scala.util.Try
 
 trait Message
@@ -31,8 +31,6 @@ object ListenerMessage extends Message {
 
   case class FoundSubdomain(subdomain: String, records: List[Record])
   case class PrintWarning(warning: String)
-  case class PrintError(error: String)
-  case class LogError(msg: String)
   case class LastScan(subdomain: String, requestsSoFar: Int, totalRequests: Int)
   case class TaskCompleted(master: Option[ActorRef])
 }
