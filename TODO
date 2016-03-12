@@ -1,5 +1,4 @@
 TODO: Implement lookup/scanner failure functionality
 TODO: Implement scanner timeout functionality
 TODO: Change execution context to be imported from an object
-TODO: Follow subdomains from records other then CNAME
 TODO: Prevent Listener from printing messages after pausing
