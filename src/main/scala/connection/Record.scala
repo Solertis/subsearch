@@ -5,7 +5,7 @@ class Record private (val recordType: String, val name: String, val data: String
 object Record {
   def apply(recordType: String, name: String, data: String): Record = {
     val importantData =
-      if (recordType == "CNAME")
+      if (List("CNAME", "NS").contains(recordType))
         data.stripSuffix(".").trim
       else if (recordType == "SRV")
         data.split(" ")(3).stripSuffix(".").trim
