@@ -78,14 +78,14 @@ class Controller(private val arguments: Arguments, private val cli: CLIOutput) {
         .map(subdomain => SubdomainUtils.ensureSubdomainEndsWithHostname(subdomain, hostname))
         .diff(zoneTransferSubdomains)
 
-    if (arguments.includeAuthoritativeNameServersWithResolvers) {
-      cli.printWarningWithTime("Adding authoritative name servers to list of resolvers")
-      cli.printLineToCLI()
-    }
-
     val resolvers =
       if (arguments.includeAuthoritativeNameServersWithResolvers) (arguments.resolvers ++ authoritativeNameServers).distinct
       else arguments.resolvers
+
+    if (arguments.includeAuthoritativeNameServersWithResolvers) {
+      cli.printWarningWithTime(s"Adding authoritative name servers to list of resolvers with a total of ${resolvers.size}")
+      cli.printLineToCLI()
+    }
 
     val subdomainScannerArguments = SubdomainScannerArguments(hostname, subdomains, resolvers, arguments.threads, arguments.concurrentResolverRequests)
 
