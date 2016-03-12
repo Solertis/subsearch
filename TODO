@@ -1,0 +1,7 @@
+TODO: Implement lookup/scanner failure functionality
+TODO: Implement scanner timeout functionality
+TODO: Create reporting framework
+TODO: Change execution context to be imported from an object
+TODO: Follow subdomains from records other then CNAME
+TODO: Remove . after NS records data
+TOOD: Prevent Listener from printing messages after pausing
