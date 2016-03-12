@@ -1,7 +1,7 @@
 package core.subdomainscanner
 
 import core.subdomainscanner.DispatcherMessage.NotifyOnCompletion
-import output.CLIOutput
+import output.Logger
 import utils.TimeUtils
 
 import akka.actor.ActorSystem
@@ -15,20 +15,20 @@ case class SubdomainScannerArguments(hostname: String,
                                      concurrentResolverRequests: Boolean)
 
 object SubdomainScanner {
-  def performScan(arguments: SubdomainScannerArguments, cli: CLIOutput)(implicit ec: ExecutionContext): Future[Unit] = {
-    cli.printWarningWithTime("Starting subdomain search:")
-    val scanner: SubdomainScanner = new SubdomainScanner(arguments, cli)
+  def performScan(arguments: SubdomainScannerArguments, logger: Logger)(implicit ec: ExecutionContext): Future[Unit] = {
+    logger.logStartedSubdomainSearch()
+    val scanner: SubdomainScanner = new SubdomainScanner(arguments, logger)
     scanner.future.map(_ => None)
   }
 }
 
-class SubdomainScanner(arguments: SubdomainScannerArguments, cli: CLIOutput)(implicit ec: ExecutionContext) {
+class SubdomainScanner(arguments: SubdomainScannerArguments, logger: Logger)(implicit ec: ExecutionContext) {
   val system = ActorSystem("SubdomainScanner")
-  val listener = system.actorOf(Listener.props(cli), "listener")
+  val listener = system.actorOf(Listener.props(logger), "listener")
   val dispatcher = system.actorOf(Dispatcher.props(arguments, listener), "dispatcher")
 
   implicit val timeout = TimeUtils.akkaAskTimeout
   val future: Future[Any] = dispatcher ? NotifyOnCompletion
 
-  PauseHandler.create(dispatcher, cli)
+  PauseHandler.create(dispatcher, logger)
 }

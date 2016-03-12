@@ -1,17 +1,14 @@
 package core
 
 import connection.{Record, DNSLookup}
-import output.CLIOutput
+import output.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class ZoneTransferScanner(hostname: String, nameServers: List[String], cli: CLIOutput)(implicit ec: ExecutionContext) {
+class ZoneTransferScanner(hostname: String, nameServers: List[String], logger: Logger)(implicit ec: ExecutionContext) {
 
   private def scan(): Future[List[String]] = {
-    if (nameServers.size > 1)
-      cli.printWarningWithTime("Attempting zone transfers:")
-    else
-      cli.printWarningWithTime("Attempting zone transfer:")
+    logger.logStartedZoneTransfer()
 
     performZoneTransfers(nameServers)
       .map(_.distinct)
@@ -34,7 +31,7 @@ class ZoneTransferScanner(hostname: String, nameServers: List[String], cli: CLIO
       .andThen {
         case records =>
           if (records.getOrElse(List.empty).nonEmpty)
-            cli.printSuccessWithTime(s"$nameServer vulnerable to zone transfer!")
+            logger.logNameServerVulnerableToZoneTransfer(nameServer)
       }
   }
 
@@ -46,10 +43,10 @@ class ZoneTransferScanner(hostname: String, nameServers: List[String], cli: CLIO
 
   private def printFoundRecords(records: List[Record]): List[Record] = {
     if (records.isEmpty)
-      cli.printInfoWithTime("Name servers aren't vulnerable to zone transfer")
+      logger.logNameServersNotVulnerableToZoneTransfer()
 
-    cli.printRecords(records)
-    cli.printLineToCLI()
+    logger.logRecords(records)
+    logger.logZoneTransferCompleted()
 
     records
   }
@@ -60,6 +57,6 @@ class ZoneTransferScanner(hostname: String, nameServers: List[String], cli: CLIO
 }
 
 object ZoneTransferScanner {
-  def attemptScan(hostname: String, nameServers: List[String], cli: CLIOutput)(implicit ec: ExecutionContext): Future[List[String]] =
-    new ZoneTransferScanner(hostname, nameServers, cli).scan()
+  def attemptScan(hostname: String, nameServers: List[String], logger: Logger)(implicit ec: ExecutionContext): Future[List[String]] =
+    new ZoneTransferScanner(hostname, nameServers, logger).scan()
 }

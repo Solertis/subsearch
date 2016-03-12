@@ -1,5 +1,6 @@
 package core
 
+import controller.Controller
 import scopt.OptionParser
 import utils.{IPUtils, SubdomainUtils, File}
 
@@ -10,13 +11,24 @@ case class Arguments(hostnames: List[String] = List.empty,
                      concurrentResolverRequests: Boolean = false,
                      extendedOutput: Boolean = false,
                      threads: Int = 10,
-                     skipZoneTransfer: Boolean = false)
+                     skipZoneTransfer: Boolean = false,
+                     csvReportFile: Option[File] = None)
 
 private class ArgumentParser(private val args: Array[String]) {
 
-  private val parser = new OptionParser[Arguments]("subsearch") {
-    head("subsearch", "0.1")
+  private val ver: String = Controller.version("MAJOR") + "." +
+                            Controller.version("MINOR") + "." +
+                            Controller.version("REVISION")
 
+  private val parser = new OptionParser[Arguments]("subsearch") {
+    head("subsearch", ver)
+
+    note("Options:")
+
+    help("help")
+      .text("Prints this usage text.")
+
+    note("")
     note("Mandatory:")
 
     opt[String]('h', "hostname")
@@ -77,7 +89,7 @@ private class ArgumentParser(private val args: Array[String]) {
       }
 
     note("")
-    note("Optional:")
+    note("General Settings:")
 
     opt[Unit]('a', "auth-resolvers")
       .text("Include the hostname's authoritative name servers in the list of resolvers. Defaults to false.")
@@ -117,10 +129,18 @@ private class ArgumentParser(private val args: Array[String]) {
       }
 
     note("")
-    note("Help:")
+    note("Reporting:")
 
-    help("help")
-      .text("Prints this usage text.")
+    opt[String]("csv-report")
+      .valueName("OUTPUTFILE")
+      .text("Outputs a CSV report of discovered subdomains including timestamp, subdomain, record type and record data.")
+      .action {
+        (argument, config) =>
+          val file: File = File.fromFilename(argument)
+          if (!file.isWriteable)
+            printErrorThenExit("The output file is not writeble.")
+          config.copy(csvReportFile = Some(file))
+      }
   }
 
   def verifyHostname(hostname: String) =

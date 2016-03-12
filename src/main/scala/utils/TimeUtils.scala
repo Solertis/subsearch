@@ -5,7 +5,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 
 object TimeUtils {
-  def currentTimeForCLI: String = {
+  def currentTimePretty: String = {
     val localTime = LocalTime.now()
     val hour = f"${localTime.getHour}%02d"
     val minute = f"${localTime.getMinute}%02d"
@@ -19,4 +19,7 @@ object TimeUtils {
 
   def awaitDuration: FiniteDuration =
     365.days
+
+  def timestampNow: String =
+    (System.currentTimeMillis / 1000).toString
 }

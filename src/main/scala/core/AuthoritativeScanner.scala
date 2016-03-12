@@ -1,13 +1,13 @@
 package core
 
-import output.CLIOutput
+import output.Logger
 import connection.DNSLookup
 import scala.concurrent.{ExecutionContext, Future}
 
-class AuthoritativeScanner(private val hostname: String, private val cli: CLIOutput)(implicit ec: ExecutionContext) {
+class AuthoritativeScanner(private val hostname: String, private val logger: Logger)(implicit ec: ExecutionContext) {
 
   private def scan(): Future[List[String]] = {
-    cli.printWarningWithTime("Identifying authoritative name servers:")
+    logger.logAuthoritativeScanStarted()
 
     DNSLookup
       .forHostname(hostname)
@@ -16,13 +16,13 @@ class AuthoritativeScanner(private val hostname: String, private val cli: CLIOut
   }
 
   private def printAuthoritativeNameServers(nameServers: List[String]) = {
-    nameServers.foreach(cli.printSuccessWithTime)
-    cli.printLineToCLI()
+    nameServers.foreach(logger.logAuthoritativeNameServer)
+    logger.logAuthoritativeScanCompleted()
     nameServers
   }
 }
 
 object AuthoritativeScanner {
-  def performScan(hostname: String, cli: CLIOutput)(implicit ec: ExecutionContext): Future[List[String]] =
-    new AuthoritativeScanner(hostname, cli).scan()
+  def performScan(hostname: String, logger: Logger)(implicit ec: ExecutionContext): Future[List[String]] =
+    new AuthoritativeScanner(hostname, logger).scan()
 }

@@ -1,11 +1,11 @@
 import controller.Controller
 import core.{ArgumentParser, Arguments}
-import output.CLIOutput
+import output.Logger
 
 class SubSearch(args: Array[String]) {
   val arguments: Arguments = ArgumentParser.parseArguments(args)
-  val cli: CLIOutput = CLIOutput.create(arguments.extendedOutput)
-  val controller: Controller = Controller.create(arguments, cli)
+  val logger: Logger = Logger.create(arguments.extendedOutput, arguments.csvReportFile)
+  val controller: Controller = Controller.create(arguments, logger)
 }
 
 object SubSearch {

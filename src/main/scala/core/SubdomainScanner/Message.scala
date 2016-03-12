@@ -30,7 +30,6 @@ object ListenerMessage extends Message {
   case object NotEnoughResolvers
 
   case class FoundSubdomain(subdomain: String, records: List[Record])
-  case class PrintWarning(warning: String)
   case class LastScan(subdomain: String, requestsSoFar: Int, totalRequests: Int)
   case class TaskCompleted(master: Option[ActorRef])
 }

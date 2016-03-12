@@ -6,25 +6,27 @@ import connection.DNSLookup
 import core.{ZoneTransferScanner, AuthoritativeScanner, Arguments}
 import core.subdomainscanner.{SubdomainScannerArguments, SubdomainScanner}
 
-import output.CLIOutput
+import output.Logger
 import utils.{SubdomainUtils, TimeUtils, FileUtils}
 import scala.concurrent.{ExecutionContext, Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object Controller {
-  def create(arguments: Arguments, cli: CLIOutput) =
-    new Controller(arguments, cli)
-}
+  def create(arguments: Arguments, logger: Logger) =
+    new Controller(arguments, logger)
 
-class Controller(private val arguments: Arguments, private val cli: CLIOutput) {
   val version = Map(("MAJOR",    0),
                     ("MINOR",    1),
                     ("REVISION", 0))
+}
+
+class Controller(private val arguments: Arguments, private val logger: Logger) {
+  val version = Controller.version
 
   initialise()
 
   def initialise() = {
-    printBanner()
+    printHeader()
     printConfig()
 
     arguments.hostnames.foreach {
@@ -32,32 +34,32 @@ class Controller(private val arguments: Arguments, private val cli: CLIOutput) {
     }
   }
 
-  def printBanner() = {
-    val banner: String =
+  def printHeader() = {
+    val header: String =
       FileUtils
         .getResourceSource("banner.txt")
         .replaceFirst("MAJOR", version("MAJOR").toString)
         .replaceFirst("MINOR", version("MINOR").toString)
         .replaceFirst("REVISION", version("REVISION").toString)
 
-    cli.printHeader(banner)
+    logger.logHeader(header)
   }
 
   def printConfig() = {
     val wordlistSize = arguments.subdomains.size
     val resolversSize = arguments.resolvers.size
 
-    cli.printConfig(arguments.threads, wordlistSize, resolversSize)
+    logger.logConfig(arguments.threads, wordlistSize, resolversSize)
   }
 
   def runScanForHostname(hostname: String): Future[Unit] = {
-    cli.printTarget(hostname)
+    logger.logTarget(hostname)
 
     DNSLookup.forHostname(hostname).hostIsValid().flatMap {
       if (_) {
         runScanners(hostname)
       } else {
-        cli.printError(s"$hostname has no DNS records.")
+        logger.logHostnameWithoutDNSRecords(hostname)
         Future()
       }
     }
@@ -67,11 +69,11 @@ class Controller(private val arguments: Arguments, private val cli: CLIOutput) {
     val executorService = Executors.newFixedThreadPool(arguments.threads)
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutorService(executorService)
 
-    val authoritativeNameServers: List[String] = Await.result(AuthoritativeScanner.performScan(hostname, cli), TimeUtils.awaitDuration)
+    val authoritativeNameServers: List[String] = Await.result(AuthoritativeScanner.performScan(hostname, logger), TimeUtils.awaitDuration)
 
     val zoneTransferSubdomains: List[String] =
       if (arguments.skipZoneTransfer) List.empty
-      else Await.result(ZoneTransferScanner.attemptScan(hostname, authoritativeNameServers, cli), TimeUtils.awaitDuration)
+      else Await.result(ZoneTransferScanner.attemptScan(hostname, authoritativeNameServers, logger), TimeUtils.awaitDuration)
 
     val subdomains =
       arguments.subdomains
@@ -82,13 +84,11 @@ class Controller(private val arguments: Arguments, private val cli: CLIOutput) {
       if (arguments.includeAuthoritativeNameServersWithResolvers) (arguments.resolvers ++ authoritativeNameServers).distinct
       else arguments.resolvers
 
-    if (arguments.includeAuthoritativeNameServersWithResolvers) {
-      cli.printWarningWithTime(s"Adding authoritative name servers to list of resolvers with a total of ${resolvers.size}")
-      cli.printLineToCLI()
-    }
+    if (arguments.includeAuthoritativeNameServersWithResolvers)
+      logger.logAddingAuthNameServersToResolvers(resolvers.size)
 
     val subdomainScannerArguments = SubdomainScannerArguments(hostname, subdomains, resolvers, arguments.threads, arguments.concurrentResolverRequests)
 
-    SubdomainScanner.performScan(subdomainScannerArguments, cli)
+    SubdomainScanner.performScan(subdomainScannerArguments, logger)
   }
 }

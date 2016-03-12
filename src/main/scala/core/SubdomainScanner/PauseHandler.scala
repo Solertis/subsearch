@@ -1,7 +1,7 @@
 package core.subdomainscanner
 
 import core.subdomainscanner.DispatcherMessage.{ResumeScanning, PauseScanning}
-import output.CLIOutput
+import output.Logger
 import utils.TimeUtils
 
 import akka.actor.ActorRef
@@ -9,18 +9,20 @@ import akka.pattern.ask
 import sun.misc.{Signal, SignalHandler}
 import scala.concurrent.Await
 
-// I'll admit, this isn't exactly kosher. Apparently this can't be done in Java 9. That should be fun.
-// How to do this in Java was found here: http://twit88.com/blog/2008/02/06/java-signal-handling/
+/**
+  * I'll admit, this isn't exactly kosher. Apparently this can't be done in Java 9. That should be fun.
+  * How to do this in Java was found here: http://twit88.com/blog/2008/02/06/java-signal-handling/
+  */
 
 object PauseHandler {
-  def create(dispatcher: ActorRef, cli: CLIOutput): PauseHandler =
-    new PauseHandler(List("INT"), dispatcher, cli)
+  def create(dispatcher: ActorRef, logger: Logger): PauseHandler =
+    new PauseHandler(List("INT"), dispatcher, logger)
 
   case class InterruptException(msg: String) extends Exception(msg)
   case class ContinueException(msg: String) extends Exception(msg)
 }
 
-class PauseHandler(signalNames: List[String], dispatcher: ActorRef, cli: CLIOutput) extends SignalHandler {
+class PauseHandler(signalNames: List[String], dispatcher: ActorRef, logger: Logger) extends SignalHandler {
   import PauseHandler.{InterruptException, ContinueException}
 
   private val signalMap = signalNames.map(name => (name, Signal.handle(new Signal(name), this))).toMap
@@ -38,7 +40,7 @@ class PauseHandler(signalNames: List[String], dispatcher: ActorRef, cli: CLIOutp
 
     try {
       while (true) {
-        cli.printInlineToCLI("[e]xit / [c]ontinue: ")
+        logger.logPauseOptions()
 
         val option: String = System.console.readLine().toLowerCase
 
@@ -47,7 +49,7 @@ class PauseHandler(signalNames: List[String], dispatcher: ActorRef, cli: CLIOutp
         else if (option == "c")
           throw new ContinueException("Continuing the scan.")
         else
-          cli.printLineToCLI()
+          logger.logInvalidPauseOption()
       }
     } catch {
       case InterruptException(msg) =>
@@ -58,9 +60,7 @@ class PauseHandler(signalNames: List[String], dispatcher: ActorRef, cli: CLIOutp
   }
 
   private def exit() = {
-    cli.printLineToCLI()
-    cli.printLineToCLI()
-    cli.printError("Cancelled by the user")
+    logger.logScanCancelled()
     System.exit(0)
   }
 
