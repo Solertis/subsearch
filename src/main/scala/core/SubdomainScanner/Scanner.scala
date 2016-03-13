@@ -2,11 +2,13 @@ package core.subdomainscanner
 
 import core.subdomainscanner.ScannerMessage._
 import core.subdomainscanner.DispatcherMessage.{FailedScan, AvailableForScan, CompletedScan, PriorityScanSubdomain}
-import core.subdomainscanner.ListenerMessage.FoundSubdomain
+import core.subdomainscanner.ListenerMessage.{ScanTimeout, FoundSubdomain}
+import utils.TimeoutFuture._
 
 import akka.actor.{Actor, Props, ActorRef}
 import connection.DNSLookup
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
 object Scanner {
   def props(listener: ActorRef, hostname: String)(implicit ec: ExecutionContext): Props =
@@ -25,11 +27,18 @@ class Scanner(listener: ActorRef, hostname: String)(implicit ec: ExecutionContex
       // Notified about available work by parent (Subdomain Dispatcher)
       context.parent ! AvailableForScan
 
-    case Scan(subdomain, resolver) =>
+    case Scan(subdomain, resolver, attempt) =>
+      val timeout =
+        if (attempt == 1) 5.seconds
+        else if (attempt == 2) 10.seconds
+        else 15.seconds
+
       DNSLookup
         .forHostnameAndResolver(subdomain, resolver)
         .queryANY()
+        .withTimeout(timeout)
         .map(records => self ! ScanComplete(records, subdomain, resolver))
+        .recover { case cause => self ! ScanFailed(cause, subdomain, resolver, attempt+1) }
 
     case ScanComplete(recordsAttempt, subdomain, resolver) =>
       if (recordsAttempt.isSuccess) {
@@ -51,6 +60,15 @@ class Scanner(listener: ActorRef, hostname: String)(implicit ec: ExecutionContex
 
         context.parent ! CompletedScan(subdomain, resolver)
       } else {
+        context.parent ! FailedScan(subdomain, resolver)
+      }
+
+    case ScanFailed(cause, subdomain, resolver, attempt) =>
+      if (attempt < 4) {
+        listener ! ScanTimeout(subdomain, resolver, attempt)
+        self ! Scan(subdomain, resolver, attempt)
+      }
+      else {
         context.parent ! FailedScan(subdomain, resolver)
       }
   }

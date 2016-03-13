@@ -32,6 +32,8 @@ class Controller(private val arguments: Arguments, private val logger: Logger) {
     arguments.hostnames.foreach {
       hostname => Await.result(runScanForHostname(hostname), TimeUtils.awaitDuration)
     }
+
+    System.exit(0)
   }
 
   def printHeader() = {

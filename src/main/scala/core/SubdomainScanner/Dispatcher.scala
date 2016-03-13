@@ -53,7 +53,9 @@ class Dispatcher(arguments: SubdomainScannerArguments, listener: ActorRef)(impli
 
     case FailedScan(subdomain, resolver) =>
       dispatcherQueue.requeueSubdomain(subdomain)
-      // TODO: What do we do with the resolver?
+      dispatcherQueue.blacklistResolver(resolver)
+      listener ! BlacklistedResolver(resolver)
+      scannerIsAvailableToScan(sender)
 
     case AvailableForScan =>
       scannerIsAvailableToScan(sender)
@@ -70,6 +72,9 @@ class Dispatcher(arguments: SubdomainScannerArguments, listener: ActorRef)(impli
       if (scanningHasNotBeenPaused && allScannersHaveTerminated) {
         if (allSubdomainsHaveBeenScanned) {
           listener ! TaskCompleted(master)
+        } else if (dispatcherQueue.isOutOfResolvers) {
+          // All resolvers are dead. Scan must terminate
+          listener ! TaskFailed(master)
         } else {
           // Add any missed subdomains back to the queue
           currentlyScanning.foreach(_ => dispatcherQueue.requeueSubdomain(_))
@@ -101,7 +106,7 @@ class Dispatcher(arguments: SubdomainScannerArguments, listener: ActorRef)(impli
       val subdomain = dispatcherQueue.dequeueSubdomain()
 
       scanningSubdomain(subdomain)
-      sender ! Scan(subdomain, resolver)
+      sender ! Scan(subdomain, resolver, 1)
       scansSoFar += 1
       listener ! LastScan(subdomain, scansSoFar, dispatcherQueue.totalNumberOfSubdomains)
 

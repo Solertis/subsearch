@@ -42,11 +42,23 @@ class CLIOutput {
   def printStatusWithoutTime(string: String) =
     printLine(string.yellow.bold)
 
+  def printStatusDuringScan(string: String) = {
+    eraseLine()
+    printStatus(string)
+    printLastRequest()
+  }
+
   def printError(string: String) =
     printLine(string.onRed.white.bold)
 
   def printInfo(string: String) =
     printLine(prependTime(string).blue)
+
+  def printInfoDuringScan(string: String) = {
+    eraseLine()
+    printInfo(string)
+    printLastRequest()
+  }
 
   private def prependTime(string: String): String =
     s"${TimeUtils.currentTimePretty} $string"
@@ -64,7 +76,15 @@ class CLIOutput {
 
   def printTarget(hostname: String) = printLineWithAfterLine(("Target: ".yellow + hostname.green).bold)
 
-  def printTaskCompleted() = printLineWithBeforeAndAfterLine("Task Completed".yellow.bold)
+  def printTaskCompleted() = {
+    eraseLine()
+    printLineWithBeforeAndAfterLine("Task Completed".yellow.bold)
+  }
+
+  def printTaskFailed() = {
+    eraseLine()
+    printLineWithBeforeAndAfterLine("Scan aborted as all resolvers are dead.".onRed.white.bold)
+  }
 
   def printPausingThreads() = {
     eraseLine()
@@ -72,25 +92,25 @@ class CLIOutput {
   }
 
   lazy val terminal = TerminalFactory.create()
+  private var lastRequest: String = ""
   def printLastRequest(subdomain: String, numberOfRequestsSoFar: Int, totalNumberOfSubdomains: Int) = {
     val percentage: Float = numberOfRequestsSoFar.toFloat / totalNumberOfSubdomains.toFloat * 100
     val message = f"$percentage%.2f" + s"% - Last request to: $subdomain"
 
     val terminalWidth: Int = terminal.getWidth
-    val outputMessage =
+    lastRequest =
       if (message.length > terminalWidth)
         message.substring(0, terminalWidth)
       else
         message
 
     eraseLine()
-    print(outputMessage)
+    printText(lastRequest)
   }
 
-  def printNotEnoughResolvers() = {
-    eraseLine()
-    printStatus("There aren't enough resolvers for each thread. Reducing thread count by 1.")
-  }
+  def printLastRequest() =
+    printText(lastRequest)
+
 
   def printRecordsDuringScan(records: List[Record], verbose: Boolean) = {
     eraseLine()

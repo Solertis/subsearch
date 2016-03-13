@@ -18,6 +18,8 @@ class DispatcherQueue(private val subdomains: List[String],
   private val prioritySubdomainsQueue: mutable.Queue[String] = mutable.Queue()
   private val resolversQueue: mutable.Queue[String] = mutable.Queue() ++= Random.shuffle(resolvers).toSet
 
+  private var blacklistedResolvers: List[String] = List.empty
+
   def remainingNumberOfSubdomains: Int = subdomainsQueue.size + prioritySubdomainsQueue.size
   def remainingNumberOfResolvers: Int = resolversQueue.size
   def isOutOfSubdomains: Boolean = subdomainsQueue.isEmpty && prioritySubdomainsQueue.isEmpty
@@ -25,11 +27,11 @@ class DispatcherQueue(private val subdomains: List[String],
   def requeueSubdomain(subdomain: String) = prioritySubdomainsQueue.enqueue(subdomain)
 
   def recycleResolver(resolver: String) =
-    if (!concurrentResolvers) resolversQueue.enqueue(resolver)
+    if (!concurrentResolvers && !blacklistedResolvers.contains(resolver)) resolversQueue.enqueue(resolver)
 
   def dequeueResolver(): String =
     if (!concurrentResolvers) resolversQueue.dequeue()
-    else resolvers(Random.nextInt(resolvers.size))
+    else resolvers.diff(blacklistedResolvers)(Random.nextInt(resolvers.diff(blacklistedResolvers).size))
 
   def dequeueSubdomain(): String =
     if (prioritySubdomainsQueue.nonEmpty) prioritySubdomainsQueue.dequeue()
@@ -42,4 +44,7 @@ class DispatcherQueue(private val subdomains: List[String],
     }
 
   def totalNumberOfSubdomains: Int = allSeenSubdomains.size
+
+  def blacklistResolver(resolver: String) =
+    blacklistedResolvers = (blacklistedResolvers ++ List(resolver)).distinct
 }

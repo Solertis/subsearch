@@ -27,5 +27,19 @@ class Listener(logger: Logger) extends Actor {
       logger.logTaskCompleted()
       if (master.isDefined) master.get ! None
       context.system.terminate()
+
+    case TaskFailed(master: Option[ActorRef]) =>
+      logger.logTaskFailed()
+      if (master.isDefined) master.get ! None
+      context.system.terminate()
+
+    case ScanTimeout(subdomain, resolver, attempt) =>
+      val duration =
+        if (attempt == 2) "10 seconds"
+        else "15 seconds"
+      logger.logTimedOutScan(subdomain, resolver, duration)
+
+    case BlacklistedResolver(resolver) =>
+      logger.logBlacklistedResolver(resolver)
   }
 }

@@ -54,6 +54,9 @@ class Logger(private val extendedOutput: Boolean, csvReportFile: Option[File]) {
   def logTaskCompleted() =
     cli.printTaskCompleted()
 
+  def logTaskFailed() =
+    cli.printTaskFailed()
+
   def logPausingThreads() =
     cli.printPausingThreads()
 
@@ -73,7 +76,13 @@ class Logger(private val extendedOutput: Boolean, csvReportFile: Option[File]) {
     cli.printLastRequest(subdomain, numberOfRequestsSoFar, totalNumberOfSubdomains)
 
   def logNotEnoughResolvers() =
-    cli.printNotEnoughResolvers()
+    cli.printInfoDuringScan("There aren't enough resolvers for each thread. Reducing thread count by 1.")
+
+  def logTimedOutScan(subdomain: String, resolver: String, duration: String) =
+    cli.printInfoDuringScan(s"Lookup of $subdomain using $resolver timed out. Increasing timeout to $duration.")
+
+  def logBlacklistedResolver(resolver: String) =
+    cli.printInfoDuringScan(s"Lookup using $resolver timed out three times. Blacklisting resolver.")
 
   def logScanCancelled() = {
     cli.printNewLine()
