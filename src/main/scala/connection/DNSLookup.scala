@@ -9,10 +9,12 @@ import scala.collection.JavaConverters._
 import scala.util.Try
 
 class DNSLookup(private val hostname: String, private val resolvers: List[String]) {
+  import DNSLookup.HostNotFoundException
+
   private val resolver: ExtendedResolver = new ExtendedResolver(resolvers.toArray)
 
   def hostIsValid(): Future[Boolean] =
-    queryANY().map(_.getOrElse(List.empty).nonEmpty)
+    queryType(Type.A, hostname).map(_.isSuccess)
 
   def queryANY(): Future[Try[List[Record]]] = queryANY(hostname)
   private def queryANY(hostname: String): Future[Try[List[Record]]] = queryType(Type.ANY, hostname)
@@ -20,19 +22,38 @@ class DNSLookup(private val hostname: String, private val resolvers: List[String
   def queryNS(): Future[Try[List[String]]] = queryNS(hostname)
   private def queryNS(hostname: String): Future[Try[List[String]]] = queryType(Type.NS, hostname).map(recordsToData)
 
-  def queryA(): Future[Try[List[String]]] = queryA(hostname)
   private def queryA(hostname: String): Future[Try[List[String]]] = queryType(Type.A, hostname).map(recordsToData)
 
   private def queryType(recordType: Int, name: String): Future[Try[List[Record]]] = {
+    def query(lookup: Lookup, attempt: Int = 1): List[Record] = {
+      lookup.run()
+
+      lookup.getResult match {
+        case Lookup.SUCCESSFUL =>
+          Option(lookup.getAnswers)
+            .getOrElse(Array.empty)
+            .toList
+            .map(dnsRecord => Record(Type.string(dnsRecord.getType), dnsRecord.getName.toString, dnsRecord.rdataToString))
+
+        case Lookup.HOST_NOT_FOUND =>
+          throw new HostNotFoundException(s"The hostname $name was not found.")
+
+        case Lookup.UNRECOVERABLE =>
+          List.empty
+
+        case Lookup.TYPE_NOT_FOUND =>
+          List.empty
+
+        case Lookup.TRY_AGAIN =>
+          if (attempt == 3) List.empty
+          else query(lookup, attempt + 1)
+      }
+    }
+
     Future {
       val lookup = new Lookup(name, recordType)
       lookup.setResolver(resolver)
-      Try {
-        Option(lookup.run())
-          .getOrElse(Array.empty)
-          .toList
-          .map(dnsRecord => Record(Type.string(dnsRecord.getType), dnsRecord.getName.toString, dnsRecord.rdataToString))
-      }
+      Try(query(lookup))
     }
   }
 
@@ -79,4 +100,6 @@ object DNSLookup {
 
   def isResolver(resolver: String): Future[Boolean] =
     Future(Try(new SimpleResolver(resolver)).isSuccess)
+
+  case class HostNotFoundException(msg: String) extends Exception(msg)
 }
