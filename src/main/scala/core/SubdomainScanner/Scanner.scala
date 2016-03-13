@@ -57,11 +57,12 @@ class Scanner(listener: ActorRef, hostname: String)(implicit ec: ExecutionContex
           }
           .distinct
           .foreach((subdomain: String) => context.parent ! PriorityScanSubdomain(subdomain))
-
-        context.parent ! CompletedScan(subdomain, resolver)
       } else {
-        context.parent ! FailedScan(subdomain, resolver)
+        // Do nothing. This indicates that the DNSLookup class tried three times to lookup the subdomain.
+        // For the moment, we aren't going to try again and will mark this subdomain scan as completed.
       }
+
+      context.parent ! CompletedScan(subdomain, resolver)
 
     case ScanFailed(cause, subdomain, resolver, attempt) =>
       if (attempt < 4) {
