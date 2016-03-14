@@ -17,7 +17,7 @@ object Controller {
 
   val version = Map(("MAJOR",    0),
                     ("MINOR",    1),
-                    ("REVISION", 1))
+                    ("REVISION", "x-SNAPSHOT"))
 }
 
 class Controller(private val arguments: Arguments, private val logger: Logger) {

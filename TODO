@@ -1,4 +1,4 @@
 TODO: Change execution context to be imported from an object
 TODO: Prevent Listener from printing messages after pausing
-TODO: Implement third party services as scan options (e.g. DNSDumpster)
+TODO: Implement third party services as scan options (e.g. DNSDumpster, VirusTotal, autogeneration of short letter and number combinations)
 TODO: Read file resolvers in to memory as they're used

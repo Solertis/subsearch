@@ -14,7 +14,7 @@ class DNSLookup(private val hostname: String, private val resolvers: List[String
   private val resolver: ExtendedResolver = new ExtendedResolver(resolvers.toArray)
 
   def hostIsValid(): Future[Boolean] =
-    queryType(Type.A, hostname).map(_.isSuccess)
+    queryType(Type.ANY, hostname).map(_.isSuccess)
 
   def queryANY(): Future[Try[List[Record]]] = queryANY(hostname)
   private def queryANY(hostname: String): Future[Try[List[Record]]] = queryType(Type.ANY, hostname)
