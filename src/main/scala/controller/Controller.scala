@@ -17,7 +17,7 @@ object Controller {
 
   val version = Map(("MAJOR",    0),
                     ("MINOR",    1),
-                    ("REVISION", 0))
+                    ("REVISION", 1))
 }
 
 class Controller(private val arguments: Arguments, private val logger: Logger) {
@@ -48,7 +48,7 @@ class Controller(private val arguments: Arguments, private val logger: Logger) {
   }
 
   def printConfig() = {
-    val wordlistSize = arguments.subdomains.size
+    val wordlistSize = arguments.wordlist.get.numberOfLines
     val resolversSize = arguments.resolvers.size
 
     logger.logConfig(arguments.threads, wordlistSize, resolversSize)
@@ -77,11 +77,6 @@ class Controller(private val arguments: Arguments, private val logger: Logger) {
       if (arguments.skipZoneTransfer) List.empty
       else Await.result(ZoneTransferScanner.attemptScan(hostname, authoritativeNameServers, logger), TimeUtils.awaitDuration)
 
-    val subdomains =
-      arguments.subdomains
-        .map(subdomain => SubdomainUtils.ensureSubdomainEndsWithHostname(subdomain, hostname))
-        .diff(zoneTransferSubdomains)
-
     val resolvers =
       if (arguments.includeAuthoritativeNameServersWithResolvers) (arguments.resolvers ++ authoritativeNameServers).distinct
       else arguments.resolvers
@@ -89,7 +84,7 @@ class Controller(private val arguments: Arguments, private val logger: Logger) {
     if (arguments.includeAuthoritativeNameServersWithResolvers)
       logger.logAddingAuthNameServersToResolvers(resolvers.size)
 
-    val subdomainScannerArguments = SubdomainScannerArguments(hostname, subdomains, resolvers, arguments.threads, arguments.concurrentResolverRequests)
+    val subdomainScannerArguments = SubdomainScannerArguments(hostname, arguments.wordlist.get, zoneTransferSubdomains, resolvers, arguments.threads, arguments.concurrentResolverRequests)
 
     SubdomainScanner.performScan(subdomainScannerArguments, logger)
   }

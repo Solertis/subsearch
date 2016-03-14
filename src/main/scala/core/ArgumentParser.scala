@@ -5,7 +5,7 @@ import scopt.OptionParser
 import utils.{IPUtils, SubdomainUtils, File}
 
 case class Arguments(hostnames: List[String] = List.empty,
-                     subdomains: List[String] = List.empty,
+                     wordlist: Option[File] = None,
                      resolvers: List[String] = List.empty,
                      includeAuthoritativeNameServersWithResolvers: Boolean = false,
                      concurrentResolverRequests: Boolean = false,
@@ -61,9 +61,7 @@ private class ArgumentParser(private val args: Array[String]) {
         (argument, config) =>
           val file: File = File.fromFilename(argument)
           verifyFile(file, "wordlist")
-          val subdomains = file.getLines.map(SubdomainUtils.normalise)
-          subdomains.foreach(verifySubdomain)
-          config.copy(subdomains = subdomains)
+          config.copy(wordlist = Option(file))
       }
 
     opt[String]('r', "resolvers")
@@ -147,10 +145,6 @@ private class ArgumentParser(private val args: Array[String]) {
     if (!SubdomainUtils.isValid(hostname))
       printErrorThenExit("The hostname '$hostname' is invalid.")
 
-  def verifySubdomain(subdomain: String) =
-    if (!SubdomainUtils.isValid(subdomain))
-      printErrorThenExit("The subdomain '$subdomain' is invalid.")
-
   def verifyResolver(resolver: String) =
     if (!IPUtils.isValid(resolver))
       printErrorThenExit("The resolver '$resolver' is not a valid IPv4 address.")
@@ -187,8 +181,6 @@ private class ArgumentParser(private val args: Array[String]) {
   private def postVerifyArguments(arguments: Arguments) = {
     if (arguments.hostnames.isEmpty)
       printErrorThenExit("At least one hostname must be specified.")
-    if (arguments.subdomains.isEmpty)
-      printErrorThenExit("The wordlist cannot be empty.")
     if (arguments.resolvers.isEmpty)
       printErrorThenExit("At least one resolver must be specified.")
   }

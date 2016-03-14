@@ -26,7 +26,7 @@ class Dispatcher(arguments: SubdomainScannerArguments, listener: ActorRef)(impli
   var numberOfPausedScanners = 0
   var whoToNotifyAboutPaused: Option[ActorRef] = None
 
-  val dispatcherQueue: DispatcherQueue = DispatcherQueue.create(arguments.subdomains, arguments.resolvers, arguments.concurrentResolverRequests)
+  val dispatcherQueue: DispatcherQueue = DispatcherQueue.create(arguments.hostname, arguments.wordlist, arguments.omitSubdomains, arguments.resolvers, arguments.concurrentResolverRequests)
 
   var scansSoFar: Int = 0
 
@@ -97,19 +97,21 @@ class Dispatcher(arguments: SubdomainScannerArguments, listener: ActorRef)(impli
       // Don't send anything to the scanner, consider it paused
       aScannerHasBeenPaused()
     }
-    else if (dispatcherQueue.isOutOfSubdomains) {
-      // There aren't any subdomains for this scanner. Stop this scanner from working
-      context.stop(sender)
-    }
     else if (!dispatcherQueue.isOutOfResolvers) {
       val resolver = dispatcherQueue.dequeueResolver()
-      val subdomain = dispatcherQueue.dequeueSubdomain()
+      val subdomainOpt: Option[String] = dispatcherQueue.dequeueSubdomain()
 
-      scanningSubdomain(subdomain)
-      sender ! Scan(subdomain, resolver, 1)
-      scansSoFar += 1
-      listener ! LastScan(subdomain, scansSoFar, dispatcherQueue.totalNumberOfSubdomains)
+      if (subdomainOpt.isDefined) {
+        val subdomain = subdomainOpt.get
 
+        scanningSubdomain(subdomain)
+        sender ! Scan(subdomain, resolver, 1)
+        scansSoFar += 1
+        listener ! LastScan(subdomain, scansSoFar, dispatcherQueue.totalNumberOfSubdomains)
+      } else {
+        // There aren't any subdomains for this scanner. Stop this scanner from working
+        terminateScanner(scanner)
+      }
     } else {
       // We don't have enough resolvers to go around. Stop this scanner from working
       listener ! NotEnoughResolvers

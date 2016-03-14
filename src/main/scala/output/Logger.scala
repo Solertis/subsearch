@@ -23,7 +23,7 @@ class Logger(private val extendedOutput: Boolean, csvReportFile: Option[File]) {
     cli.printError(s"$hostname has no DNS records.")
 
   def logAuthoritativeScanStarted() =
-    cli.printSuccess("Identifying authoritative name servers:")
+    cli.printStatus("Identifying authoritative name servers:")
 
   def logAuthoritativeNameServer(nameServer: String) =
     cli.printSuccess(nameServer)

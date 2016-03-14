@@ -35,8 +35,8 @@ class Listener(logger: Logger) extends Actor {
 
     case ScanTimeout(subdomain, resolver, attempt) =>
       val duration =
-        if (attempt == 2) "10 seconds"
-        else "15 seconds"
+        if (attempt == 2) "20 seconds"
+        else "30 seconds"
       logger.logTimedOutScan(subdomain, resolver, duration)
 
     case BlacklistedResolver(resolver) =>

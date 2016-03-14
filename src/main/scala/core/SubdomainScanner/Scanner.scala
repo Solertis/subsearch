@@ -29,9 +29,9 @@ class Scanner(listener: ActorRef, hostname: String)(implicit ec: ExecutionContex
 
     case Scan(subdomain, resolver, attempt) =>
       val timeout =
-        if (attempt == 1) 5.seconds
-        else if (attempt == 2) 10.seconds
-        else 15.seconds
+        if (attempt == 1) 10.seconds
+        else if (attempt == 2) 20.seconds
+        else 30.seconds
 
       DNSLookup
         .forHostnameAndResolver(subdomain, resolver)

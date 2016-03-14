@@ -7,8 +7,6 @@ import scala.io.Source
 import scala.util.Try
 
 class File(val path: Path) {
-  lazy val numberOfLines: Int = FileUtils.getLines(path).size
-
   def exists: Boolean =
     FileUtils.exists(path)
 
@@ -18,10 +16,16 @@ class File(val path: Path) {
   def isReadable: Boolean =
     FileUtils.isReadable(path)
 
-  def getLines: List[String] =
+  def linesIterator: Iterator[String] =
+    FileUtils.linesIterator(path)
+
+  lazy val getLines: List[String] =
     FileUtils.getLines(path)
 
-  def getSource: String =
+  lazy val numberOfLines: Int =
+    FileUtils.numberOfLines(path)
+
+  lazy val getSource: String =
     getLines.mkString("\n")
 
   def isWriteable: Boolean =
@@ -63,8 +67,14 @@ object FileUtils {
   def writeLinesToPath(lines: List[String], path: Path) =
     Files.write(path, (lines ++ List("")).mkString("\n").getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND)
 
+  def linesIterator(path: Path): Iterator[String] =
+    io.Source.fromFile(path.toUri).getLines
+
   def getLines(path: Path): List[String] =
     Files.readAllLines(path).asScala.toList
+
+  def numberOfLines(path: Path): Int =
+    io.Source.fromFile(path.toUri).getLines.size
 
   /**
     * This is a hacky way of getting the entire source of a resource

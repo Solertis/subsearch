@@ -2,14 +2,15 @@ package core.subdomainscanner
 
 import core.subdomainscanner.DispatcherMessage.NotifyOnCompletion
 import output.Logger
-import utils.TimeUtils
+import utils.{File, TimeUtils}
 
 import akka.actor.ActorSystem
 import akka.pattern.ask
 import scala.concurrent.{ExecutionContext, Future}
 
 case class SubdomainScannerArguments(hostname: String,
-                                     subdomains: List[String],
+                                     wordlist: File,
+                                     omitSubdomains: List[String],
                                      resolvers: List[String],
                                      threads: Int,
                                      concurrentResolverRequests: Boolean)

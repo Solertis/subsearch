@@ -2,7 +2,7 @@
 subsearch is a command line tool designed to brute force subdomain names. It is aimed at penetration testers and bug
 bounty hunters and has been built with a focus on speed, stealth and reporting.
 
-The current release is version 0.1.0 and was published on 14/3/2016.
+The current release is version 0.1.1 and was published on 14/3/2016.
 
 ## Features
 
@@ -14,6 +14,11 @@ of subdomains to scan for
 - Extra level of verbosity
 - Reporting capability
 - Real-time feedback
+- Supports the use of massive wordlists
+
+## Requirements
+
+subsearch is built on and requires Java 8.
 
 ## How to use
 
@@ -24,7 +29,7 @@ jar will be located in `target/scala-2.11/`.
 To show the below help text, execute `java -jar <subsearch jar file> --help`.
 
 ```
-subsearch 0.1.0
+subsearch 0.1.1
 Usage: subsearch [options]
 
 Options:
@@ -80,6 +85,10 @@ For a list of things that are already on my roadmap, checkout the `TODO` file.
 
 ## Changelog
 
+- 0.1.1 - 14/3/2016
+  - subsearch can now handle massive wordlists, wordlists aren't loaded into memory in one go
+  - resolver timeouts increased from 5, 10 and 15 seconds to 10, 20 and 30 seconds
+  - other minor bug fixes
 - 0.1.0 - 14/3/2016 - Initial release
 
 ## License
