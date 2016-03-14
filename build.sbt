@@ -1,6 +1,6 @@
-name := "SubSearch"
+name := "subsearch"
 
-version := "1.0"
+assemblyJarName in assembly := s"subsearch-0.1.0.jar"
 
 scalaVersion := "2.11.7"
 
