@@ -1,7 +1,7 @@
 package output
 
 import connection.Record
-import utils.{SubdomainUtils, File}
+import utils.{HostnameUtils, File}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -27,12 +27,12 @@ class StandardOutput(private val file: Option[File], private val verbose: Boolea
 
   protected def printRecordsVerbose(records: List[Record]) = {
     val lines: List[String] =
-      SubdomainUtils
+      HostnameUtils
         .distinctAndSortedNames(records)
         .flatMap {
           subdomain =>
             val subdomainRecords: List[Record] = records.filter(_.name == subdomain)
-            val recordTypes: List[String] = SubdomainUtils.distinctAndSortedTypes(subdomainRecords)
+            val recordTypes: List[String] = HostnameUtils.distinctAndSortedTypes(subdomainRecords)
 
             recordTypes.flatMap {
               recordType =>
@@ -59,9 +59,9 @@ class StandardOutput(private val file: Option[File], private val verbose: Boolea
 
   protected def printRecordsNormal(records: List[Record]) = {
     val lines: List[String] =
-      SubdomainUtils
+      HostnameUtils
         .distinctAndSortedNames(records)
-        .map(subdomain => (subdomain, SubdomainUtils.recordTypesForSubdomainInRecords(subdomain, records)))
+        .map(subdomain => (subdomain, HostnameUtils.recordTypesForSubdomainInRecords(subdomain, records)))
         .map(data => s"${data._2.mkString(", ")}:  ${data._1}")
 
     if (lines.nonEmpty)

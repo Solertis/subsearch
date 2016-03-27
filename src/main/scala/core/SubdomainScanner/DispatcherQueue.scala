@@ -1,6 +1,6 @@
 package core.subdomainscanner
 
-import utils.{SubdomainUtils, File}
+import utils.{HostnameUtils, File}
 
 import scala.collection.mutable
 import scala.util.Random
@@ -55,9 +55,9 @@ class DispatcherQueue(private val hostname: String,
 
   private def nextSubdomainsIterator(): Option[String] = {
     if (subdomainsIterator.hasNext) {
-      val subdomainPart = SubdomainUtils.normalise(subdomainsIterator.next)
-      val subdomainPartIsValid = SubdomainUtils.isValidSubdomainPart(subdomainPart)
-      val fullyQualifiedSubdomain = SubdomainUtils.ensureSubdomainEndsWithHostname(subdomainPart, hostname)
+      val subdomainPart = HostnameUtils.normalise(subdomainsIterator.next)
+      val subdomainPartIsValid = HostnameUtils.isValidSubdomainPart(subdomainPart)
+      val fullyQualifiedSubdomain = HostnameUtils.ensureSubdomainEndsWithHostname(subdomainPart, hostname)
 
       if (subdomainPartIsValid && !allSeenSubdomains.contains(fullyQualifiedSubdomain)) {
         Option(fullyQualifiedSubdomain)

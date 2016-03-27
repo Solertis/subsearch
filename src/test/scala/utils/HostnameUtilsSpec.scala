@@ -2,9 +2,9 @@ package utils
 
 import connection.Record
 import org.scalatest.FlatSpec
-import utils.SubdomainUtils._
+import utils.HostnameUtils._
 
-class SubdomainUtilsSpec extends FlatSpec {
+class HostnameUtilsSpec extends FlatSpec {
 
   behavior of "normalise"
 

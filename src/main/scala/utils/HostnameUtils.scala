@@ -2,7 +2,7 @@ package utils
 
 import connection.Record
 
-object SubdomainUtils {
+object HostnameUtils {
   def normalise(hostname: String): String =
     hostname
       .trim // Trim leading/trailing whitespaces

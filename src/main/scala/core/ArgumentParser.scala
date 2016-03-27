@@ -2,7 +2,7 @@ package core
 
 import controller.Controller
 import scopt.OptionParser
-import utils.{IPUtils, SubdomainUtils, File}
+import utils.{IPUtils, HostnameUtils, File}
 
 case class Arguments(hostnames: List[String] = List.empty,
                      wordlist: Option[File] = None,
@@ -37,7 +37,7 @@ private class ArgumentParser(private val args: Array[String]) {
       .text("The hostname(s) to scan. Enter more than one by separating with a comma.")
       .action {
         (argument, config) =>
-          val hostnames = argument.split(",").toList.map(SubdomainUtils.normalise)
+          val hostnames = argument.split(",").toList.map(HostnameUtils.normalise)
           hostnames.foreach(verifyHostname)
           config.copy(hostnames = hostnames)
       }
@@ -49,7 +49,7 @@ private class ArgumentParser(private val args: Array[String]) {
         (argument, config) =>
           val file: File = File.fromFilename(argument)
           verifyFile(file, "hostlist")
-          val hostnames = file.getLines.map(SubdomainUtils.normalise)
+          val hostnames = file.getLines.map(HostnameUtils.normalise)
           hostnames.foreach(verifyHostname)
           config.copy(hostnames = (config.hostnames ++ hostnames).distinct)
       }
@@ -154,7 +154,7 @@ private class ArgumentParser(private val args: Array[String]) {
   }
 
   def verifyHostname(hostname: String) =
-    if (!SubdomainUtils.isValidDomain(hostname))
+    if (!HostnameUtils.isValidDomain(hostname))
       printErrorThenExit("The hostname '$hostname' is invalid.")
 
   def verifyResolver(resolver: String) =
