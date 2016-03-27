@@ -7,7 +7,7 @@ import core.{ZoneTransferScanner, AuthoritativeScanner, Arguments}
 import core.subdomainscanner.{SubdomainScannerArguments, SubdomainScanner}
 
 import output.Logger
-import utils.{SubdomainUtils, TimeUtils, FileUtils}
+import utils.{TimeUtils, FileUtils}
 import scala.concurrent.{ExecutionContext, Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
