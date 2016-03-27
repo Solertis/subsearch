@@ -105,7 +105,7 @@ class Dispatcher(arguments: SubdomainScannerArguments, listener: ActorRef)(impli
         val subdomain = subdomainOpt.get
 
         scanningSubdomain(subdomain)
-        sender ! Scan(subdomain, resolver, 1)
+        scanner ! Scan(subdomain, resolver, 1)
         scansSoFar += 1
         listener ! LastScan(subdomain, scansSoFar, dispatcherQueue.totalNumberOfSubdomains)
       } else {
