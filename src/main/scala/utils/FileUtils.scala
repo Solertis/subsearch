@@ -31,8 +31,8 @@ class File(val path: Path) {
   def isWriteable: Boolean =
     FileUtils.isWriteable(path)
 
-  def writeLines(lines: List[String]) =
-    FileUtils.writeLinesToPath(lines, path)
+  def write(data: String) =
+    FileUtils.writeToPath(data, path)
 }
 
 object File {
@@ -64,8 +64,8 @@ object FileUtils {
     }
   }
 
-  def writeLinesToPath(lines: List[String], path: Path) =
-    Files.write(path, (lines ++ List("")).mkString("\n").getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND)
+  def writeToPath(data: String, path: Path) =
+    Files.write(path, data.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND)
 
   def linesIterator(path: Path): Iterator[String] =
     io.Source.fromFile(path.toUri).getLines

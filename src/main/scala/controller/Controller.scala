@@ -33,7 +33,7 @@ class Controller(private val arguments: Arguments, private val logger: Logger) {
       hostname => Await.result(runScanForHostname(hostname), TimeUtils.awaitDuration)
     }
 
-    System.exit(0)
+    exitGracefully()
   }
 
   def printHeader() = {
@@ -88,4 +88,7 @@ class Controller(private val arguments: Arguments, private val logger: Logger) {
 
     SubdomainScanner.performScan(subdomainScannerArguments, logger)
   }
+
+  def exitGracefully() =
+    logger.completedLoggingFuture.andThen { case _ => System.exit(0) }
 }

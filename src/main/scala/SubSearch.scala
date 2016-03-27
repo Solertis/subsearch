@@ -4,7 +4,7 @@ import output.Logger
 
 class SubSearch(args: Array[String]) {
   val arguments: Arguments = ArgumentParser.parseArguments(args)
-  val logger: Logger = Logger.create(arguments.extendedOutput, arguments.csvReportFile)
+  val logger: Logger = Logger.create(arguments.extendedOutput, arguments.csvReportFile, arguments.stdoutReportFile)
   val controller: Controller = Controller.create(arguments, logger)
 }
 

@@ -12,7 +12,8 @@ case class Arguments(hostnames: List[String] = List.empty,
                      extendedOutput: Boolean = false,
                      threads: Int = 10,
                      skipZoneTransfer: Boolean = false,
-                     csvReportFile: Option[File] = None)
+                     csvReportFile: Option[File] = None,
+                     stdoutReportFile: Option[File] = None)
 
 private class ArgumentParser(private val args: Array[String]) {
 
@@ -129,7 +130,7 @@ private class ArgumentParser(private val args: Array[String]) {
     note("")
     note("Reporting:")
 
-    opt[String]("csv-report")
+    opt[String]("report-csv")
       .valueName("OUTPUTFILE")
       .text("Outputs a CSV report of discovered subdomains including timestamp, subdomain, record type and record data.")
       .action {
@@ -138,6 +139,17 @@ private class ArgumentParser(private val args: Array[String]) {
           if (!file.isWriteable)
             printErrorThenExit("The output file is not writeble.")
           config.copy(csvReportFile = Some(file))
+      }
+
+    opt[String]("report-stdout")
+      .valueName("OUTPUTFILE")
+      .text("Outputs standard out to a file.")
+      .action {
+        (argument, config) =>
+          val file: File = File.fromFilename(argument)
+          if (!file.isWriteable)
+            printErrorThenExit("The output file is not writeble.")
+          config.copy(stdoutReportFile = Some(file))
       }
   }
 

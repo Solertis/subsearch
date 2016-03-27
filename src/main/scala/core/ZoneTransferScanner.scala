@@ -44,8 +44,9 @@ class ZoneTransferScanner(hostname: String, nameServers: List[String], logger: L
   private def printFoundRecords(records: List[Record]): List[Record] = {
     if (records.isEmpty)
       logger.logNameServersNotVulnerableToZoneTransfer()
+    else
+      logger.logRecords(records)
 
-    logger.logRecords(records)
     logger.logZoneTransferCompleted()
 
     records

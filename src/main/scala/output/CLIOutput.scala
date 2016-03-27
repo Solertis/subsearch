@@ -1,169 +1,99 @@
 package output
 
+import java.io.PrintStream
 import connection.Record
-import utils.TimeUtils
 import pl.project13.scala.rainbow.Rainbow._
-
 import scala.tools.jline.TerminalFactory
 
-class CLIOutput {
+class CLIOutput(private val printStream: PrintStream, private val verbose: Boolean) extends StandardOutput(None, verbose) {
+  override def print(string: String) = printStream.print(string)
+  private def eraseln() = print("\033[1K\033[0G")
 
-  // CLI
-  def printLine(line: String) =
-    println(line)
+  override def printSuccessWithoutTime(string: String) = println(string.green)
+  override def printStatusWithoutTime(string: String) = println(string.yellow.bold)
+  override def printInfoWithoutTime(string: String) = println(string.blue)
+  override def printErrorWithoutTime(string: String) = println(string.onRed.white.bold)
 
-  def printText(text: String) =
-    print(text)
-
-  def printLineWithAfterLine(line: String) = {
-    printLine(line)
-    printNewLine()
+  override def printStatusDuringScan(string: String) = {
+    eraseln()
+    super.printStatusDuringScan(string)
+    printLastRequest()
   }
 
-  def printLineWithBeforeAndAfterLine(line: String) = {
-    printNewLine()
-    printLine(line)
-    printNewLine()
+  override def printInfoDuringScan(string: String) = {
+    eraseln()
+    super.printInfoDuringScan(string)
+    printLastRequest()
   }
 
-  def printNewLine() =
+  override def printHeader(header: String) = {
+    println(header.magenta)
     println()
+  }
 
-  private def eraseLine() =
-    System.out.print("\033[1K\033[0G")
+  override def printConfig(config: List[(String, String)], separator: String) = {
+    val string: String =
+      config
+        .map((tuple: (String, String)) => tuple._1.yellow + tuple._2.green)
+        .mkString(separator.magenta)
 
-  // Generic
-  def printSuccess(string: String) =
-    printLine(prependTime(string).green)
+    println(string)
+    println()
+  }
 
-  def printStatus(string: String) =
-    printStatusWithoutTime(prependTime(string))
+  override def printTarget(text: String, hostname: String) = {
+    println(s"${text.yellow}${hostname.green}".bold)
+    println()
+  }
 
-  def printStatusWithoutTime(string: String) =
-    printLine(string.yellow.bold)
+  override def printTaskCompleted(text: String) = {
+    eraseln()
+    super.printTaskCompleted(text)
+  }
 
-  def printStatusDuringScan(string: String) = {
-    eraseLine()
-    printStatus(string)
+  override def printTaskFailed(text: String) = {
+    eraseln()
+    super.printTaskFailed(text)
+  }
+
+  override def printPausingThreads(text: String) = {
+    eraseln()
+    printStatusWithoutTime(text)
+  }
+
+  override def printPauseOptions(text: String) = {
+    print(text)
+  }
+
+  override def printInvalidPauseOptions(text: String) = {
+    println(text)
+  }
+  private var lastRequest: String = ""
+  override def printLastRequest(text: String) = {
+    lastRequest = text
+    eraseln()
     printLastRequest()
-  }
-
-  def printError(string: String) =
-    printLine(string.onRed.white.bold)
-
-  def printInfo(string: String) =
-    printLine(prependTime(string).blue)
-
-  def printInfoDuringScan(string: String) = {
-    eraseLine()
-    printInfo(string)
-    printLastRequest()
-  }
-
-  private def prependTime(string: String): String =
-    s"${TimeUtils.currentTimePretty} $string"
-
-  // Application specific
-  def printHeader(header: String) = printLineWithAfterLine(header.magenta)
-
-  def printConfig(threads: Int, wordlistSize: Int, resolverslistSize: Int) = {
-    val separator = " | ".magenta
-    val text = "Threads: ".yellow + threads.toString.green + separator +
-      "Wordlist size: ".yellow + wordlistSize.toString.green + separator +
-      "Number of resolvers: ".yellow + resolverslistSize.toString.green
-    printLineWithAfterLine(text.bold)
-  }
-
-  def printTarget(hostname: String) = printLineWithAfterLine(("Target: ".yellow + hostname.green).bold)
-
-  def printTaskCompleted() = {
-    eraseLine()
-    printLineWithBeforeAndAfterLine("Task Completed".yellow.bold)
-  }
-
-  def printTaskFailed() = {
-    eraseLine()
-    printLineWithBeforeAndAfterLine("Scan aborted as all resolvers are dead.".onRed.white.bold)
-  }
-
-  def printPausingThreads() = {
-    eraseLine()
-    printStatusWithoutTime("CTRL+C detected: Pausing threads, please wait...")
   }
 
   lazy val terminal = TerminalFactory.create()
-  private var lastRequest: String = ""
-  def printLastRequest(subdomain: String, numberOfRequestsSoFar: Int, totalNumberOfSubdomains: Int) = {
-    val percentage: Float = numberOfRequestsSoFar.toFloat / totalNumberOfSubdomains.toFloat * 100
-    val message = f"$percentage%.2f" + s"% - Last request to: $subdomain"
-
+  override def printLastRequest() = {
     val terminalWidth: Int = terminal.getWidth
-    lastRequest =
-      if (message.length > terminalWidth)
-        message.substring(0, terminalWidth)
-      else
-        message
+    val text = if (lastRequest.length <= terminalWidth) lastRequest
+               else lastRequest.substring(0, terminalWidth)
 
-    eraseLine()
-    printText(lastRequest)
+    print(lastRequest)
   }
 
-  def printLastRequest() =
-    printText(lastRequest)
-
-
-  def printRecordsDuringScan(records: List[Record], verbose: Boolean) = {
-    eraseLine()
-    printRecords(records, verbose)
+  override def printRecordsDuringScan(records: List[Record]) = {
+    eraseln()
+    super.printRecordsDuringScan(records)
   }
 
-  def printRecords(records: List[Record], verbose: Boolean) = {
-    if (verbose) {
-      records
-        .map(_.name)
-        .distinct
-        .sorted
-        .foreach {
-          subdomain =>
-            val subdomainRecords: List[Record] = records.filter(_.name == subdomain)
-            val recordTypes: List[String] = subdomainRecords.map(_.recordType).distinct.sorted
-
-            recordTypes.foreach {
-              recordType =>
-                subdomainRecords.filter(_.recordType == recordType).foreach {
-                  case Record(_, _, data) =>
-                    val msg = prependTime(f"$recordType%-7s:  $subdomain").green
-
-                    if (List("A", "AAAA", "CNAME", "NS", "SRV").contains(recordType))
-                      printLine(s"$msg  ->  $data")
-                    else if (recordType == "MX")
-                      printLine(s"$msg  @@  $data")
-                    else
-                      printLine(s"$msg  --  $data")
-                }
-            }
-        }
-
-    } else {
-      records
-        .map(_.name)
-        .distinct
-        .sorted
-        .map(subdomain => (subdomain, recordTypesForSubdomainInRecords(subdomain, records)))
-        .foreach {
-          (data: (String, List[String])) =>
-            printSuccess(s"${data._2.sorted.mkString(", ")}:  ${data._1}")
-        }
-    }
-  }
-
-  private def recordTypesForSubdomainInRecords(subdomain: String, records: List[Record]): List[String] =
-    records
-      .filter(_.name == subdomain)
-      .map(_.recordType)
-      .distinct
+  override protected def formatRecordTypeAndSubdomainForPrinting(recordType: String, subdomain: String): String =
+    super.formatRecordTypeAndSubdomainForPrinting(recordType,subdomain).green
 }
 
 object CLIOutput {
-  def create(): CLIOutput = new CLIOutput()
+  def create(verbose: Boolean): CLIOutput = create(System.out, verbose)
+  private[this] def create(printStream: PrintStream, verbose: Boolean): CLIOutput = new CLIOutput(printStream, verbose)
 }

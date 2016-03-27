@@ -1,127 +1,137 @@
 package output
 
 import connection.Record
-import utils.{TimeUtils, File}
-
+import utils.File
+import utils.MathUtils.percentage
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class Logger(private val extendedOutput: Boolean, csvReportFile: Option[File]) {
-  private val cli: CLIOutput = CLIOutput.create()
+class Logger(private val verbose: Boolean, csvReportFile: Option[File], stdoutReportFile: Option[File]) {
+  private val cli: Option[CLIOutput] = Some(CLIOutput.create(verbose))
+  private val stdout: Option[StandardOutput] = StandardOutput.create(stdoutReportFile, verbose)
+  private val csv: Option[CSVOutput] = CSVOutput.create(csvReportFile)
 
-  // Printing set formats
+  private val outputs: List[Output] = List(cli, csv, stdout).flatten
+
   def logHeader(header: String) =
-    cli.printHeader(header)
+    outputs.foreach(_.printHeader(header))
 
-  def logConfig(threads: Int, wordlistSize: Int, resolverslistSize: Int) =
-    cli.printConfig(threads, wordlistSize, resolverslistSize)
+  def logConfig(threads: Int, wordlistSize: Int, resolverslistSize: Int) = {
+    val config = List(("Threads: ", threads.toString),
+                      ("Wordlist size: ", wordlistSize.toString),
+                      ("Number of resolvers: ", resolverslistSize.toString))
+    val separator = " | "
+
+    outputs.foreach(_.printConfig(config, separator))
+  }
 
   def logTarget(hostname: String) =
-    cli.printTarget(hostname)
+    outputs.foreach(_.printTarget("Target: ", hostname))
 
   def logHostnameWithoutDNSRecords(hostname: String) =
-    cli.printError(s"$hostname has no DNS records.")
+    outputs.foreach(_.printErrorWithoutTime(s"$hostname has no DNS records."))
 
   def logAuthoritativeScanStarted() =
-    cli.printStatus("Identifying authoritative name servers:")
+    outputs.foreach(_.printStatus("Identifying authoritative name servers:"))
 
   def logAuthoritativeNameServer(nameServer: String) =
-    cli.printSuccess(nameServer)
+    outputs.foreach(_.printSuccess(nameServer))
 
   def logAuthoritativeScanCompleted() =
-    cli.printNewLine()
+    outputs.foreach(_.println())
 
   def logStartedZoneTransfer() =
-    cli.printStatus("Attempting zone transfer:")
+    outputs.foreach(_.printStatus("Attempting zone transfer:"))
 
   def logNameServersNotVulnerableToZoneTransfer() =
-    cli.printInfo("Name servers aren't vulnerable to zone transfer")
+    outputs.foreach(_.printInfo("Name servers aren't vulnerable to zone transfer"))
 
   def logNameServerVulnerableToZoneTransfer(nameServer: String) =
-    cli.printSuccess(s"$nameServer vulnerable to zone transfer!")
+    outputs.foreach(_.printSuccess(s"$nameServer vulnerable to zone transfer!"))
 
   def logZoneTransferCompleted() =
-    cli.printNewLine()
+    outputs.foreach(_.println())
 
-  def logAddingAuthNameServersToResolvers(totalResolversSize: Int) = {
-    cli.printStatus(s"Adding authoritative name servers to list of resolvers with a total of $totalResolversSize")
-    cli.printNewLine()
-  }
+  def logAddingAuthNameServersToResolvers(totalResolversSize: Int) =
+    outputs.foreach {
+      output =>
+        output.printStatus(s"Adding authoritative name servers to list of resolvers with a total of $totalResolversSize")
+        output.println()
+    }
 
   def logStartedSubdomainSearch() =
-    cli.printStatus("Starting subdomain search:")
+    outputs.foreach(_.printStatus("Starting subdomain search:"))
 
   def logTaskCompleted() =
-    cli.printTaskCompleted()
+    outputs.foreach(_.printTaskCompleted("Task Completed"))
 
   def logTaskFailed() =
-    cli.printTaskFailed()
+    outputs.foreach(_.printTaskFailed("Scan aborted as all resolvers are dead."))
 
   def logPausingThreads() =
-    cli.printPausingThreads()
+    outputs.foreach(_.printPausingThreads("CTRL+C detected: Pausing threads, please wait..."))
 
   def logPauseOptions() =
-    cli.printText("[e]xit / [c]ontinue: ")
+    outputs.foreach(_.printPauseOptions("[e]xit / [c]ontinue: "))
 
   def logInvalidPauseOption() =
-    cli.printNewLine()
-
-  def logRecords(records: List[Record]) =
-    cli.printRecords(recordNewRecords(records), extendedOutput)
-
-  def logRecordsDuringScan(records: List[Record]) =
-    cli.printRecordsDuringScan(recordNewRecords(records), extendedOutput)
-
-  def logLastRequest(subdomain: String, numberOfRequestsSoFar: Int, totalNumberOfSubdomains: Int) =
-    cli.printLastRequest(subdomain, numberOfRequestsSoFar, totalNumberOfSubdomains)
+    outputs.foreach(_.printInvalidPauseOptions(""))
 
   def logNotEnoughResolvers() =
-    cli.printInfoDuringScan("There aren't enough resolvers for each thread. Reducing thread count by 1.")
+    outputs.foreach(_.printInfoDuringScan("There aren't enough resolvers for each thread. Reducing thread count by 1."))
 
   def logTimedOutScan(subdomain: String, resolver: String, duration: String) =
-    cli.printInfoDuringScan(s"Lookup of $subdomain using $resolver timed out. Increasing timeout to $duration.")
+    outputs.foreach(_.printInfoDuringScan(s"Lookup of $subdomain using $resolver timed out. Increasing timeout to $duration."))
 
   def logBlacklistedResolver(resolver: String) =
-    cli.printInfoDuringScan(s"Lookup using $resolver timed out three times. Blacklisting resolver.")
+    outputs.foreach(_.printInfoDuringScan(s"Lookup using $resolver timed out three times. Blacklisting resolver."))
 
-  def logScanCancelled() = {
-    cli.printNewLine()
-    cli.printNewLine()
-    cli.printError("Cancelled by the user")
-  }
+  def logScanCancelled() =
+    outputs.foreach {
+      output =>
+        output.println()
+        output.println()
+        output.printErrorWithoutTime("Cancelled by the user")
 
-  // Keeping track of seen records
-  private var allSeenRecords: List[Record] = List.empty
-  private def recordNewRecords(records: List[Record]) = {
-    val newRecords =
-      records
-        .filter(dnsRecord => !List("NSEC", "RRSIG", "SOA").contains(dnsRecord.recordType))
-        .diff(allSeenRecords)
-
-    allSeenRecords = allSeenRecords ++ records
-
-    if (csvReportFile.isDefined)
-      saveRecordsToCSVReportFile(newRecords)
-
-    newRecords
-  }
-
-  /**
-    * Using a future and chaining it means that writing to file will happen on a different thread to printing to CLI
-    */
-  private var saveToFileFuture: Future[Unit] = Future()
-  private def saveRecordsToCSVReportFile(records: List[Record]) = {
-    saveToFileFuture = saveToFileFuture.map {
-      _ =>
-        val file: File = csvReportFile.get
-        val lines = records.map(record => s"${TimeUtils.timestampNow},${record.name},${record.recordType},${record.data}")
-        file.writeLines(lines)
+        if (!completedLoggingFuture.isCompleted && (csvReportFile.isDefined || stdoutReportFile.isDefined))
+          output.printErrorWithoutTime("WARNING: Reports may not be complete due to unexpected exit.")
     }
+
+  def completedLoggingFuture: Future[Unit] = {
+    Future.sequence(outputs.map(_.writingToFileFuture)).map(_ => Unit)
   }
+
+  def logLastRequest(subdomain: String, numberOfRequestsSoFar: Int, totalNumberOfSubdomains: Int) = {
+    val progress: Float = percentage(numberOfRequestsSoFar, totalNumberOfSubdomains)
+    outputs.foreach(_.printLastRequest(f"$progress%.2f" + s"% - Last request to: $subdomain"))
+  }
+
+  def logRecords(records: List[Record]) = {
+    val newRecords = filterOutSeenAndInvalidRecords(records)
+    saveNewRecords(newRecords)
+
+    outputs.foreach(_.printRecords(newRecords))
+  }
+
+  def logRecordsDuringScan(records: List[Record]) = {
+    val newRecords = filterOutSeenAndInvalidRecords(records)
+    saveNewRecords(newRecords)
+
+    outputs.foreach(_.printRecordsDuringScan(newRecords))
+  }
+
+  private var allSeenRecords: List[Record] = List.empty
+  private def filterOutSeenAndInvalidRecords(records: List[Record]): List[Record] =
+    records
+      .filter(dnsRecord => !List("NSEC", "RRSIG", "SOA").contains(dnsRecord.recordType))
+      .diff(allSeenRecords)
+
+  private def saveNewRecords(records: List[Record]) =
+    allSeenRecords = allSeenRecords ++ records
 
 }
 
 object Logger {
-  def create(extendedOutput: Boolean, csvReportFile: Option[File]): Logger =
-    new Logger(extendedOutput: Boolean, csvReportFile: Option[File])
+  def create(extendedOutput: Boolean, csvReportFile: Option[File], stdoutReportFile: Option[File]): Logger =
+    new Logger(extendedOutput, csvReportFile, stdoutReportFile)
 }
