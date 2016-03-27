@@ -146,7 +146,7 @@ private class ArgumentParser(private val args: Array[String]) {
       printErrorThenExit("The hostname '$hostname' is invalid.")
 
   def verifyResolver(resolver: String) =
-    if (!IPUtils.isValid(resolver))
+    if (!IPUtils.isValidIPv4(resolver))
       printErrorThenExit("The resolver '$resolver' is not a valid IPv4 address.")
 
   def verifyFile(file: File, description : String) = {

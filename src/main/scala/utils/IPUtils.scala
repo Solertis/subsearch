@@ -6,7 +6,7 @@ object IPUtils {
   def normalise(ip: String): String =
     ip.trim
 
-  def isValid(ip: String): Boolean = {
+  def isValidIPv4(ip: String): Boolean = {
     val parts = ip.split("\\.", -1)
 
     parts.length == 4 &&
