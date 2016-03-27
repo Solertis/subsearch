@@ -31,5 +31,5 @@ class SubdomainScanner(arguments: SubdomainScannerArguments, logger: Logger)(imp
   implicit val timeout = TimeUtils.akkaAskTimeout
   val future: Future[Any] = dispatcher ? NotifyOnCompletion
 
-  PauseHandler.create(dispatcher, logger)
+  private val pauseHandler = PauseHandler.create(dispatcher, logger)
 }

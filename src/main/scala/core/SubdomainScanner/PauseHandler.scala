@@ -29,7 +29,7 @@ class PauseHandler(signalNames: List[String], dispatcher: ActorRef, logger: Logg
 
   private var pausingCalled: Boolean = false
 
-  def handle(signal: Signal) = {
+  override def handle(signal: Signal) = {
     if (pausingCalled)
       exit()
     else
