@@ -55,11 +55,11 @@ class DispatcherQueue(private val hostname: String,
 
   private def nextSubdomainsIterator(): Option[String] = {
     if (subdomainsIterator.hasNext) {
-      val subdomain = SubdomainUtils.normalise(subdomainsIterator.next)
-      val subdomainIsValid = SubdomainUtils.isValid(subdomain)
-      val fullyQualifiedSubdomain = SubdomainUtils.ensureSubdomainEndsWithHostname(subdomain, hostname)
+      val subdomainPart = SubdomainUtils.normalise(subdomainsIterator.next)
+      val subdomainPartIsValid = SubdomainUtils.isValidSubdomainPart(subdomainPart)
+      val fullyQualifiedSubdomain = SubdomainUtils.ensureSubdomainEndsWithHostname(subdomainPart, hostname)
 
-      if (subdomainIsValid && !allSeenSubdomains.contains(fullyQualifiedSubdomain)) {
+      if (subdomainPartIsValid && !allSeenSubdomains.contains(fullyQualifiedSubdomain)) {
         Option(fullyQualifiedSubdomain)
       }
       else {

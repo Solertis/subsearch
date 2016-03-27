@@ -142,7 +142,7 @@ private class ArgumentParser(private val args: Array[String]) {
   }
 
   def verifyHostname(hostname: String) =
-    if (!SubdomainUtils.isValid(hostname))
+    if (!SubdomainUtils.isValidDomain(hostname))
       printErrorThenExit("The hostname '$hostname' is invalid.")
 
   def verifyResolver(resolver: String) =
