@@ -4,6 +4,8 @@ assemblyJarName in assembly := s"subsearch-0.1.x-SNAPSHOT.jar"
 
 scalaVersion := "2.11.7"
 
+scalacOptions ++= Seq("-unchecked", "-deprecation")
+
 resolvers += Resolver.sonatypeRepo("public")
 
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.1" % "test"
