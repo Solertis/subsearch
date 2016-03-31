@@ -1,8 +1,9 @@
 package com.gilazaria.subsearch.core
 
+import com.gilazaria.subsearch.SubSearch
 import com.gilazaria.subsearch.controller.Controller
 import scopt.OptionParser
-import com.gilazaria.subsearch.utils.{IPUtils, HostnameUtils, File}
+import com.gilazaria.subsearch.utils.{File, HostnameUtils, IPUtils}
 
 case class Arguments(hostnames: List[String] = List.empty,
                      wordlist: Option[File] = None,
@@ -17,12 +18,8 @@ case class Arguments(hostnames: List[String] = List.empty,
 
 private class ArgumentParser(private val args: Array[String]) {
 
-  private val ver: String = Controller.version("MAJOR") + "." +
-                            Controller.version("MINOR") + "." +
-                            Controller.version("REVISION")
-
   private val parser = new OptionParser[Arguments]("subsearch") {
-    head("subsearch", ver)
+    head("subsearch", SubSearch.version)
 
     note("Options:")
 
