@@ -74,7 +74,7 @@ class Controller(private val arguments: Arguments, private val logger: Logger) {
     val authoritativeNameServers: List[String] = Await.result(AuthoritativeScanner.performScan(hostname, logger), TimeUtils.awaitDuration)
 
     val zoneTransferSubdomains: List[String] =
-      if (arguments.skipZoneTransfer) List.empty
+      if (!arguments.zoneTransfer) List.empty
       else Await.result(ZoneTransferScanner.attemptScan(hostname, authoritativeNameServers, logger), TimeUtils.awaitDuration)
 
     val resolvers =

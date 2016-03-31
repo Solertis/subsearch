@@ -11,7 +11,7 @@ case class Arguments(hostnames: List[String] = List.empty,
                      concurrentResolverRequests: Boolean = false,
                      extendedOutput: Boolean = false,
                      threads: Int = 10,
-                     skipZoneTransfer: Boolean = false,
+                     zoneTransfer: Boolean = false,
                      csvReportFile: Option[File] = None,
                      stdoutReportFile: Option[File] = None)
 
@@ -120,11 +120,21 @@ private class ArgumentParser(private val args: Array[String]) {
           config.copy(extendedOutput = true)
       }
 
-    opt[Unit]('z', "no-zone-transfer")
-      .text("Avoids attempting a zone transfer against the host's authoritative name servers.")
+    opt[Unit]("comprehensive")
+      .text("Runs all additional scanners.")
       .action {
         (argument, config) =>
-          config.copy(skipZoneTransfer = true)
+          config.copy(zoneTransfer = true)
+      }
+
+    note("")
+    note("Additional Scanners:")
+
+    opt[Unit]('z', "zone-transfer")
+      .text("Attempts a zone transfer against the host's authoritative name servers.")
+      .action {
+        (argument, config) =>
+          config.copy(zoneTransfer = true)
       }
 
     note("")
