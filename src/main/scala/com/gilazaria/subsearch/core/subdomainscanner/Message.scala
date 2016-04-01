@@ -1,7 +1,8 @@
 package com.gilazaria.subsearch.core.subdomainscanner
 
 import akka.actor.ActorRef
-import com.gilazaria.subsearch.connection.Record
+import com.gilazaria.subsearch.model.Record
+
 import scala.util.Try
 
 trait Message

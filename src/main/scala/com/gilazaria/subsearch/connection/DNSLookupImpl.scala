@@ -1,6 +1,9 @@
 package com.gilazaria.subsearch.connection
 
+import com.gilazaria.subsearch.model
+import com.gilazaria.subsearch.model.{Record, RecordType}
 import org.xbill.DNS._
+
 import scala.annotation.tailrec
 import scala.util.Try
 import scala.collection.JavaConverters._
@@ -8,13 +11,13 @@ import scala.collection.JavaConverters._
 class DNSLookupImpl extends DNSLookupTrait {
   import DNSLookupImpl.{HostNotFoundException, ServerFailureException}
 
-  override def performQueryOfType(hostname: String, resolver: String, recordType: RecordType): Try[Set[Record]] =
+  override def performQueryOfType(hostname: String, resolver: String, recordType: RecordType): Try[Set[model.Record]] =
     if (recordType == RecordType.AXFR)
       Try(performZoneTransfer(hostname, resolver))
     else
       Try(performLookup(hostname, resolver, recordType))
 
-  private[this] def performZoneTransfer(hostname: String, resolver: String): Set[Record] = {
+  private[this] def performZoneTransfer(hostname: String, resolver: String): Set[model.Record] = {
     val transfer: ZoneTransferIn = ZoneTransferIn.newAXFR(new Name(hostname), resolver, null)
 
     recordsFromTransfer(transfer)
@@ -32,14 +35,14 @@ class DNSLookupImpl extends DNSLookupTrait {
     }
   }
 
-  private[this] def performLookup(hostname: String, resolver: String, recordType: RecordType): Set[Record] = {
+  private[this] def performLookup(hostname: String, resolver: String, recordType: RecordType): Set[model.Record] = {
     val lookup = new Lookup(hostname, recordType.intValue)
     lookup.setResolver(new SimpleResolver(resolver))
     query(hostname, resolver, lookup)
   }
 
   @tailrec
-  private[this] def query(hostname: String, resolver: String, lookup: Lookup, attempt: Int = 1): Set[Record] = {
+  private[this] def query(hostname: String, resolver: String, lookup: Lookup, attempt: Int = 1): Set[model.Record] = {
     lookup.run()
 
     lookup.getResult match {

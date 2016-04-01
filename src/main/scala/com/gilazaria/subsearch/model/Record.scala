@@ -1,4 +1,4 @@
-package com.gilazaria.subsearch.connection
+package com.gilazaria.subsearch.model
 
 class Record private(val name: String, val recordType: String, val data: String)
 

@@ -1,6 +1,6 @@
 package com.gilazaria.subsearch.utils
 
-import com.gilazaria.subsearch.connection.Record
+import com.gilazaria.subsearch.model.Record
 import org.scalatest.FlatSpec
 import com.gilazaria.subsearch.utils.HostnameUtils._
 

@@ -1,7 +1,8 @@
 package com.gilazaria.subsearch.output
 
-import com.gilazaria.subsearch.connection.Record
-import com.gilazaria.subsearch.utils.{HostnameUtils, File}
+import com.gilazaria.subsearch.model.Record
+import com.gilazaria.subsearch.utils.{File, HostnameUtils}
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 

@@ -1,7 +1,8 @@
 package com.gilazaria.subsearch.core
 
 import com.gilazaria.subsearch.output.Logger
-import com.gilazaria.subsearch.connection.{DNSLookupImpl, DNSLookupTrait, RecordType}
+import com.gilazaria.subsearch.connection.{DNSLookupImpl, DNSLookupTrait}
+import com.gilazaria.subsearch.model.RecordType
 
 import scala.concurrent.{ExecutionContext, Future}
 

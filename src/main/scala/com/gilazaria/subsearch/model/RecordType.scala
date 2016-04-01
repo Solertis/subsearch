@@ -1,4 +1,4 @@
-package com.gilazaria.subsearch.connection
+package com.gilazaria.subsearch.model
 
 import org.xbill.DNS.Type
 

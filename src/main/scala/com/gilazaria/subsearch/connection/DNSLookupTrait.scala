@@ -1,5 +1,7 @@
 package com.gilazaria.subsearch.connection
 
+import com.gilazaria.subsearch.model.{Record, RecordType}
+
 import scala.util.Try
 
 trait DNSLookupTrait {

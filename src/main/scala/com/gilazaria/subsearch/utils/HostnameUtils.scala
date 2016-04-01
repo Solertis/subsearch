@@ -1,6 +1,6 @@
 package com.gilazaria.subsearch.utils
 
-import com.gilazaria.subsearch.connection.Record
+import com.gilazaria.subsearch.model.Record
 
 object HostnameUtils {
   def normalise(hostname: String): String =

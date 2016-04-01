@@ -1,8 +1,10 @@
 package com.gilazaria.subsearch.output
 
 import java.io.PrintStream
-import com.gilazaria.subsearch.connection.Record
+
+import com.gilazaria.subsearch.model.Record
 import pl.project13.scala.rainbow.Rainbow._
+
 import scala.tools.jline.TerminalFactory
 
 class CLIOutput(private val printStream: PrintStream, private val verbose: Boolean) extends StandardOutput(None, verbose) {

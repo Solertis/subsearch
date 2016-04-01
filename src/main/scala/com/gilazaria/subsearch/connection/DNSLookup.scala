@@ -2,7 +2,10 @@ package com.gilazaria.subsearch.connection
 
 import java.util
 
+import com.gilazaria.subsearch.model
+import com.gilazaria.subsearch.model.Record
 import org.xbill.DNS._
+
 import scala.annotation.tailrec
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -18,17 +21,17 @@ class DNSLookup(private val hostname: String, private val resolvers: List[String
   def hostIsValid(): Future[Boolean] =
     queryType(Type.ANY, hostname).map(_.isSuccess)
 
-  def queryANY(): Future[Try[List[Record]]] = queryANY(hostname)
-  private def queryANY(hostname: String): Future[Try[List[Record]]] = queryType(Type.ANY, hostname)
+  def queryANY(): Future[Try[List[model.Record]]] = queryANY(hostname)
+  private def queryANY(hostname: String): Future[Try[List[model.Record]]] = queryType(Type.ANY, hostname)
 
   def queryNS(): Future[Try[List[String]]] = queryNS(hostname)
   private def queryNS(hostname: String): Future[Try[List[String]]] = queryType(Type.NS, hostname).map(recordsToData)
 
   private def queryA(hostname: String): Future[Try[List[String]]] = queryType(Type.A, hostname).map(recordsToData)
 
-  private def queryType(recordType: Int, name: String): Future[Try[List[Record]]] = {
+  private def queryType(recordType: Int, name: String): Future[Try[List[model.Record]]] = {
     @tailrec
-    def query(lookup: Lookup, attempt: Int = 1): List[Record] = {
+    def query(lookup: Lookup, attempt: Int = 1): List[model.Record] = {
       lookup.run()
 
       lookup.getResult match {
@@ -60,16 +63,16 @@ class DNSLookup(private val hostname: String, private val resolvers: List[String
     }
   }
 
-  private def recordsToData(records: Try[List[Record]]): Try[List[String]] = Try(records.get.map(_.data))
+  private def recordsToData(records: Try[List[model.Record]]): Try[List[String]] = Try(records.get.map(_.data))
 
-  def zoneTransfer(): Future[List[Record]] = {
+  def zoneTransfer(): Future[List[model.Record]] = {
     if (resolvers.size != 1)
       throw new IllegalArgumentException("Exactly one resolver must be supplied for a zone transfer.")
 
     Future {
       val transfer: ZoneTransferIn = ZoneTransferIn.newAXFR(new Name(hostname), resolvers.head, null)
 
-      val records: Try[List[Record]] = Try {
+      val records: Try[List[model.Record]] = Try {
         Option(transfer.run())
           .getOrElse(new util.ArrayList())
           .asScala
