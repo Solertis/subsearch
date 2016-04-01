@@ -3,6 +3,7 @@ package com.gilazaria.subsearch.output
 import com.gilazaria.subsearch.model.Record
 import com.gilazaria.subsearch.utils.{File, TimeUtils}
 
+import scala.collection.SortedSet
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -14,7 +15,7 @@ class CSVOutput(private val file: Option[File]) extends Output {
     */
 
   private var saveToFileFuture: Future[Unit] = Future(Unit)
-  override def printRecords(records: List[Record]) = {
+  override def printRecords(records: SortedSet[Record]) = {
     if (file.isDefined) {
       saveToFileFuture = saveToFileFuture.map {
         _ =>

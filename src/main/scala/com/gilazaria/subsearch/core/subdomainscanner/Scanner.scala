@@ -1,13 +1,12 @@
 package com.gilazaria.subsearch.core.subdomainscanner
 
+import com.gilazaria.subsearch.connection.{DNSLookupImpl, DNSLookupTrait}
 import com.gilazaria.subsearch.core.subdomainscanner.ScannerMessage._
-import com.gilazaria.subsearch.core.subdomainscanner.DispatcherMessage.{FailedScan, AvailableForScan, CompletedScan, PriorityScanSubdomain}
-import com.gilazaria.subsearch.core.subdomainscanner.ListenerMessage.{ScanTimeout, FoundSubdomain}
+import com.gilazaria.subsearch.core.subdomainscanner.DispatcherMessage.{AvailableForScan, CompletedScan, FailedScan, PriorityScanSubdomain}
+import com.gilazaria.subsearch.core.subdomainscanner.ListenerMessage.{FoundSubdomain, ScanTimeout}
 import com.gilazaria.subsearch.utils.TimeoutFuture._
-
 import akka.actor.{Actor, Props, ActorRef}
-import com.gilazaria.subsearch.connection.DNSLookup
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 object Scanner {
@@ -16,6 +15,8 @@ object Scanner {
 }
 
 class Scanner(listener: ActorRef, hostname: String)(implicit ec: ExecutionContext) extends Actor {
+  private val lookup: DNSLookupTrait = DNSLookupImpl.create()
+
   override def postRestart(reason: Throwable) = {
     preStart
     // Reporting for duty after restart
@@ -33,9 +34,7 @@ class Scanner(listener: ActorRef, hostname: String)(implicit ec: ExecutionContex
         else if (attempt == 2) 20.seconds
         else 30.seconds
 
-      DNSLookup
-        .forHostnameAndResolver(subdomain, resolver)
-        .queryANY()
+      Future(lookup.performQueryOfTypeANY(subdomain, resolver))
         .withTimeout(timeout)
         .map(records => self ! ScanComplete(records, subdomain, resolver))
         .recover { case cause => self ! ScanFailed(cause, subdomain, resolver, attempt+1) }
@@ -50,12 +49,7 @@ class Scanner(listener: ActorRef, hostname: String)(implicit ec: ExecutionContex
         records
           .filter(record => List("CNAME", "SRV", "MX").contains(record.recordType))
           .filter(record => record.data.endsWith(hostname))
-          .map {
-            record =>
-              if (record.recordType == "MX") record.data.split(" ").last
-              else record.data
-          }
-          .distinct
+          .map(_.data)
           .foreach((subdomain: String) => context.parent ! PriorityScanSubdomain(subdomain))
       } else {
         // Do nothing. This indicates that the DNSLookup class tried three times to lookup the subdomain.

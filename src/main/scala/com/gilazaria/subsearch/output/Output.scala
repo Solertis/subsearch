@@ -3,6 +3,7 @@ package com.gilazaria.subsearch.output
 import com.gilazaria.subsearch.model.Record
 import com.gilazaria.subsearch.utils.TimeUtils
 
+import scala.collection.SortedSet
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -77,7 +78,7 @@ trait Output {
 
   def printLastRequest() = {}
 
-  def printRecords(records: List[Record])
+  def printRecords(records: SortedSet[Record])
 
-  def printRecordsDuringScan(records: List[Record]) = printRecords(records)
+  def printRecordsDuringScan(records: SortedSet[Record]) = printRecords(records)
 }

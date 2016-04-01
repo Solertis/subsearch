@@ -12,9 +12,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-class DNSLookup(private val hostname: String, private val resolvers: List[String]) {
-  import DNSLookup.HostNotFoundException
-  import DNSLookup.ServerFailureException
+class DNSLookupOld(private val hostname: String, private val resolvers: List[String]) {
+  import DNSLookupOld.HostNotFoundException
+  import DNSLookupOld.ServerFailureException
 
   private val resolver: ExtendedResolver = new ExtendedResolver(resolvers.toArray)
 
@@ -93,15 +93,15 @@ class DNSLookup(private val hostname: String, private val resolvers: List[String
     Future.sequence(nameServers.map(_.stripSuffix(".").trim).map(queryA).map(_.map(_.getOrElse(List.empty)))).map(_.flatten)
 }
 
-object DNSLookup {
-  def forHostname(hostname: String): DNSLookup =
-    DNSLookup.forHostnameAndResolvers(hostname, List("8.8.8.8", "8.8.4.4"))
+object DNSLookupOld {
+  def forHostname(hostname: String): DNSLookupOld =
+    DNSLookupOld.forHostnameAndResolvers(hostname, List("8.8.8.8", "8.8.4.4"))
 
-  def forHostnameAndResolver(hostname: String, resolver: String): DNSLookup =
-    DNSLookup.forHostnameAndResolvers(hostname, List(resolver))
+  def forHostnameAndResolver(hostname: String, resolver: String): DNSLookupOld =
+    DNSLookupOld.forHostnameAndResolvers(hostname, List(resolver))
 
-  def forHostnameAndResolvers(hostname: String, resolvers: List[String]): DNSLookup = {
-    new DNSLookup(hostname, resolvers)
+  def forHostnameAndResolvers(hostname: String, resolvers: List[String]): DNSLookupOld = {
+    new DNSLookupOld(hostname, resolvers)
   }
 
   def isResolver(resolver: String): Future[Boolean] =

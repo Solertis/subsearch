@@ -2,9 +2,10 @@ package com.gilazaria.subsearch.core
 
 import com.gilazaria.subsearch.output.Logger
 import com.gilazaria.subsearch.connection.{DNSLookupImpl, DNSLookupTrait}
-import com.gilazaria.subsearch.model.RecordType
+import com.gilazaria.subsearch.model.{Record, RecordType}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.collection.SortedSet
 
 class AuthoritativeScanner(private val logger: Logger)(implicit ec: ExecutionContext) {
   private val lookup: DNSLookupTrait = DNSLookupImpl.create()
@@ -12,33 +13,35 @@ class AuthoritativeScanner(private val logger: Logger)(implicit ec: ExecutionCon
   def performLookupOnHostname(hostname: String, resolver: String): Future[Set[String]] = {
     logger.logAuthoritativeScanStarted()
 
-    nameserversForHostname(hostname, resolver)
-      .flatMap(nameservers => ipsForNameservers(nameservers, resolver))
+    nameServersForHostname(hostname, resolver)
+      .flatMap(nameservers => ipsForNameServers(nameservers, resolver))
       .map(printAuthoritativeNameServers)
   }
 
 
-  private[this] def nameserversForHostname(hostname: String, resolver: String): Future[Set[String]] = {
+  private[this] def nameServersForHostname(hostname: String, resolver: String): Future[Set[String]] = {
     Future {
       lookup
         .performQueryOfType(hostname, resolver, RecordType.NS)
-        .getOrElse(Set.empty)
+        .getOrElse(SortedSet.empty[Record])
         .map(_.data)
+        .toSet
     }
   }
 
-  private[this] def ipsForNameservers(nameservers: Set[String], resolver: String): Future[Set[String]] = {
+  private[this] def ipsForNameServers(nameservers: Set[String], resolver: String): Future[Set[String]] = {
     Future
-      .sequence(nameservers.map(ns => ipsForNameserver(ns, resolver)))
+      .sequence(nameservers.map(ns => ipsForNameServer(ns, resolver)))
       .map(_.flatten)
   }
 
-  private[this] def ipsForNameserver(nameserver: String, resolver: String): Future[Set[String]] = {
+  private[this] def ipsForNameServer(nameserver: String, resolver: String): Future[Set[String]] = {
     Future {
       lookup
         .performQueryOfType(nameserver, resolver, RecordType.A)
-        .getOrElse(Set.empty)
+        .getOrElse(SortedSet.empty[Record])
         .map(_.data)
+        .toSet
     }
   }
 

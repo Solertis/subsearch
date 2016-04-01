@@ -20,23 +20,4 @@ object HostnameUtils {
   def ensureSubdomainEndsWithHostname(subdomain: String, hostname: String): String =
     if (subdomain.endsWith(hostname)) subdomain
     else s"$subdomain.$hostname"
-
-  def recordTypesForSubdomainInRecords(subdomain: String, records: List[Record]): List[String] =
-    records
-      .filter(_.name == subdomain)
-      .map(_.recordType)
-      .distinct
-      .sorted
-
-  def distinctAndSortedNames(records: List[Record]): List[String] =
-    records
-      .map(_.name)
-      .distinct
-      .sorted
-
-  def distinctAndSortedTypes(records: List[Record]): List[String] =
-    records
-      .map(_.recordType)
-      .distinct
-      .sorted
 }

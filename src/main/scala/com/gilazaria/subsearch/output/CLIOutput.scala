@@ -1,11 +1,10 @@
 package com.gilazaria.subsearch.output
 
 import java.io.PrintStream
-
 import com.gilazaria.subsearch.model.Record
 import pl.project13.scala.rainbow.Rainbow._
-
 import scala.tools.jline.TerminalFactory
+import scala.collection.SortedSet
 
 class CLIOutput(private val printStream: PrintStream, private val verbose: Boolean) extends StandardOutput(None, verbose) {
   override def print(string: String) = printStream.print(string)
@@ -86,7 +85,7 @@ class CLIOutput(private val printStream: PrintStream, private val verbose: Boole
     print(lastRequest)
   }
 
-  override def printRecordsDuringScan(records: List[Record]) = {
+  override def printRecordsDuringScan(records: SortedSet[Record]) = {
     eraseln()
     super.printRecordsDuringScan(records)
   }

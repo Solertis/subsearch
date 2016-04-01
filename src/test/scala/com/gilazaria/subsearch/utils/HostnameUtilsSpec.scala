@@ -103,38 +103,4 @@ class HostnameUtilsSpec extends FlatSpec {
     val actual = ensureSubdomainEndsWithHostname(subdomain, hostname)
   }
 
-  behavior of "recordTypesForSubdomainInRecords"
-
-  it should "return a distinct sorted list of record types for a specific subdomain" in {
-    val subdomain = "aaaaa"
-    val records = List(Record("aaaaa", "A", "bbbbb"), Record("asdas", "CNAME", "asda"), Record("aaaaa", "NS", "bbbbb"), Record("ccccc", "A", "ddddd"), Record("a", "AAAA", "b"))
-
-    val expected = List("A", "NS")
-    val actual = recordTypesForSubdomainInRecords(subdomain, records)
-
-    assert(expected == actual)
-  }
-
-  behavior of "distinctAndSortedNames"
-
-  it should "return a distinct sorted list of record names" in {
-    val records = List(Record("aaaaa", "A", "bbbbb"), Record("asdas", "CNAME", "asda"), Record("aaaaa", "NS", "bbbbb"), Record("ccccc", "A", "ddddd"), Record("a", "AAAA", "b"))
-
-    val expected = List("a", "aaaaa", "asdas", "ccccc")
-    val actual = distinctAndSortedNames(records)
-
-    assert(expected == actual)
-  }
-
-  behavior of "distinctAndSortedTypes"
-
-  it should "return a distinct sorted list of record types" in {
-    val records = List(Record("aaaaa", "A", "bbbbb"), Record("asdas", "CNAME", "asda"), Record("ccccc", "A", "ddddd"), Record("a", "AAAA", "b"))
-
-    val expected = List("A", "AAAA", "CNAME")
-    val actual = distinctAndSortedTypes(records)
-
-    assert(expected == actual)
-  }
-
 }

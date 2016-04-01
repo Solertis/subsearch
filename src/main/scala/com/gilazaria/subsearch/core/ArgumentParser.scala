@@ -1,7 +1,6 @@
 package com.gilazaria.subsearch.core
 
 import com.gilazaria.subsearch.SubSearch
-import com.gilazaria.subsearch.controller.Controller
 import scopt.OptionParser
 import com.gilazaria.subsearch.utils.{File, HostnameUtils, IPUtils}
 
@@ -12,7 +11,7 @@ case class Arguments(hostnames: List[String] = List.empty,
                      concurrentResolverRequests: Boolean = false,
                      extendedOutput: Boolean = false,
                      threads: Int = 10,
-                     zoneTransfer: Boolean = false,
+                     performZoneTransfer: Boolean = false,
                      csvReportFile: Option[File] = None,
                      stdoutReportFile: Option[File] = None)
 
@@ -121,7 +120,7 @@ private class ArgumentParser(private val args: Array[String]) {
       .text("Runs all additional scanners.")
       .action {
         (argument, config) =>
-          config.copy(zoneTransfer = true)
+          config.copy(performZoneTransfer = true)
       }
 
     note("")
@@ -131,7 +130,7 @@ private class ArgumentParser(private val args: Array[String]) {
       .text("Attempts a zone transfer against the host's authoritative name servers.")
       .action {
         (argument, config) =>
-          config.copy(zoneTransfer = true)
+          config.copy(performZoneTransfer = true)
       }
 
     note("")

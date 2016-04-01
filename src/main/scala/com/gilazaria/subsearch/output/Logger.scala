@@ -6,6 +6,7 @@ import com.gilazaria.subsearch.utils.MathUtils.percentage
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.collection.SortedSet
 
 class Logger(private val verbose: Boolean, csvReportFile: Option[File], stdoutReportFile: Option[File]) {
   private val cli: Option[CLIOutput] = Some(CLIOutput.create(verbose))
@@ -28,9 +29,6 @@ class Logger(private val verbose: Boolean, csvReportFile: Option[File], stdoutRe
 
   def logTarget(hostname: String) =
     outputs.foreach(_.printTarget("Target: ", hostname))
-
-  def logHostnameWithoutDNSRecords(hostname: String) =
-    outputs.foreach(_.printErrorWithoutTime(s"$hostname has no DNS records."))
 
   def logAuthoritativeScanStarted() =
     outputs.foreach(_.printStatus("Identifying authoritative name servers:"))
@@ -107,27 +105,27 @@ class Logger(private val verbose: Boolean, csvReportFile: Option[File], stdoutRe
     outputs.foreach(_.printLastRequest(f"$progress%.2f" + s"% - Last request to: $subdomain"))
   }
 
-  def logRecords(records: List[Record]) = {
+  def logRecords(records: SortedSet[Record]) = {
     val newRecords = filterOutSeenAndInvalidRecords(records)
     saveNewRecords(newRecords)
 
     outputs.foreach(_.printRecords(newRecords))
   }
 
-  def logRecordsDuringScan(records: List[Record]) = {
+  def logRecordsDuringScan(records: SortedSet[Record]) = {
     val newRecords = filterOutSeenAndInvalidRecords(records)
     saveNewRecords(newRecords)
 
     outputs.foreach(_.printRecordsDuringScan(newRecords))
   }
 
-  private var allSeenRecords: List[Record] = List.empty
-  private def filterOutSeenAndInvalidRecords(records: List[Record]): List[Record] =
+  private var allSeenRecords: SortedSet[Record] = SortedSet.empty
+  private def filterOutSeenAndInvalidRecords(records: SortedSet[Record]): SortedSet[Record] =
     records
       .filter(dnsRecord => !List("NSEC", "RRSIG", "SOA").contains(dnsRecord.recordType))
       .diff(allSeenRecords)
 
-  private def saveNewRecords(records: List[Record]) =
+  private def saveNewRecords(records: SortedSet[Record]) =
     allSeenRecords = allSeenRecords ++ records
 
 }

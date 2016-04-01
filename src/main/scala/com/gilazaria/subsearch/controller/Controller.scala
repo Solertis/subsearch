@@ -3,7 +3,6 @@ package com.gilazaria.subsearch.controller
 import java.util.concurrent.Executors
 
 import com.gilazaria.subsearch.SubSearch
-import com.gilazaria.subsearch.connection.DNSLookup
 import com.gilazaria.subsearch.core.{Arguments, AuthoritativeScanner, ZoneTransferScanner}
 import com.gilazaria.subsearch.core.subdomainscanner.{SubdomainScanner, SubdomainScannerArguments}
 import com.gilazaria.subsearch.output.Logger
@@ -49,15 +48,7 @@ class Controller(private val arguments: Arguments, private val logger: Logger) {
 
   def runScanForHostname(hostname: String): Future[Unit] = {
     logger.logTarget(hostname)
-
-    DNSLookup.forHostname(hostname).hostIsValid().flatMap {
-      if (_) {
-        runScanners(hostname)
-      } else {
-        logger.logHostnameWithoutDNSRecords(hostname)
-        Future(Unit)
-      }
-    }
+    runScanners(hostname)
   }
 
   private def runScanners(hostname: String): Future[Unit] = {
@@ -65,10 +56,7 @@ class Controller(private val arguments: Arguments, private val logger: Logger) {
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutorService(executorService)
 
     val authoritativeNameServers: Set[String] = retrieveAuthoritativeNameServers(hostname)
-
-    val zoneTransferSubdomains: Set[String] =
-      if (!arguments.zoneTransfer) Set.empty
-      else Await.result(ZoneTransferScanner.attemptScan(hostname, authoritativeNameServers.toList, logger), TimeUtils.awaitDuration).toSet
+    val zoneTransferSubdomains: Set[String] = performZoneTransferScan(hostname, authoritativeNameServers)
 
     val resolvers =
       if (arguments.includeAuthoritativeNameServersWithResolvers) (arguments.resolvers ++ authoritativeNameServers).distinct
@@ -86,6 +74,16 @@ class Controller(private val arguments: Arguments, private val logger: Logger) {
     val scanner = AuthoritativeScanner.create(logger)
     val lookup = scanner.performLookupOnHostname(hostname, arguments.resolvers.head)
     Await.result(lookup, TimeUtils.awaitDuration)
+  }
+
+  private def performZoneTransferScan(hostname: String, resolvers: Set[String]): Set[String] = {
+    if (arguments.performZoneTransfer) {
+      val scanner = ZoneTransferScanner.create(logger)
+      val lookup = scanner.performLookup(hostname, resolvers)
+      Await.result(lookup, TimeUtils.awaitDuration)
+    } else {
+      Set.empty
+    }
   }
 
   def exitGracefully() =

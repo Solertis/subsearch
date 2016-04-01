@@ -1,48 +1,50 @@
 package com.gilazaria.subsearch.core
 
-import com.gilazaria.subsearch.connection.DNSLookup
-import com.gilazaria.subsearch.model.Record
+import com.gilazaria.subsearch.connection.{DNSLookupImpl, DNSLookupTrait}
+import com.gilazaria.subsearch.model.{Record, RecordType}
 import com.gilazaria.subsearch.output.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
+import scala.collection.SortedSet
 
-class ZoneTransferScanner(hostname: String, nameServers: List[String], logger: Logger)(implicit ec: ExecutionContext) {
+class ZoneTransferScanner(logger: Logger)(implicit ec: ExecutionContext) {
+  val lookup: DNSLookupTrait = DNSLookupImpl.create()
 
-  private def scan(): Future[List[String]] = {
+  def performLookup(hostname: String, resolvers: Set[String]): Future[Set[String]] = {
     logger.logStartedZoneTransfer()
 
-    performZoneTransfers(nameServers)
-      .map(_.distinct)
-      .map(filterOutOtherHosts)
-      .map(sortRecordsByName)
+    zoneTransfersForHostnameAndResolvers(hostname, resolvers)
+      .map(records => recordsEndingWithHostname(hostname, records))
       .map(printFoundRecords)
       .map(convertRecordsToSubdomains)
   }
 
-  private def performZoneTransfers(nameServers: List[String]): Future[List[Record]] =
+  private def zoneTransfersForHostnameAndResolvers(hostname: String, resolvers: Set[String]): Future[SortedSet[Record]] =
     Future
-      .sequence(nameServers.map(performZoneTransfer))
-      .map(_.flatten)
+      .sequence(resolvers.map(resolver => zoneTransferForHostnameAndResolver(hostname, resolver)))
+      .map(_.reduce(_ ++ _)) // Flatten for Set[SortedSet[A]]
 
-  private def performZoneTransfer(nameServer: String): Future[List[Record]] = {
-    val dnsLookup = DNSLookup.forHostnameAndResolver(hostname, nameServer)
-    val zoneTransferRecords: Future[List[Record]] = dnsLookup.zoneTransfer()
+  private def zoneTransferForHostnameAndResolver(hostname: String, resolver: String): Future[SortedSet[Record]] = {
+    val lookupFut: Future[SortedSet[Record]] =
+      Future {
+        lookup
+          .performQueryOfType(hostname, resolver, RecordType.AXFR)
+          .getOrElse(SortedSet.empty)
+      }
 
-    zoneTransferRecords
+    lookupFut
       .andThen {
-        case records =>
-          if (records.getOrElse(List.empty).nonEmpty)
-            logger.logNameServerVulnerableToZoneTransfer(nameServer)
+        case records: Try[SortedSet[Record]] =>
+          if (records.getOrElse(SortedSet.empty).nonEmpty)
+            logger.logNameServerVulnerableToZoneTransfer(resolver)
       }
   }
 
-  private def filterOutOtherHosts(records: List[Record]): List[Record] =
+  private def recordsEndingWithHostname(hostname: String, records: SortedSet[Record]): SortedSet[Record] =
     records.filter(_.name.endsWith(hostname))
 
-  private def sortRecordsByName(records: List[Record]): List[Record] =
-    records.sortBy(_.name)
-
-  private def printFoundRecords(records: List[Record]): List[Record] = {
+  private def printFoundRecords(records: SortedSet[Record]): SortedSet[Record] = {
     if (records.isEmpty)
       logger.logNameServersNotVulnerableToZoneTransfer()
     else
@@ -53,12 +55,12 @@ class ZoneTransferScanner(hostname: String, nameServers: List[String], logger: L
     records
   }
 
-  private def convertRecordsToSubdomains(records: List[Record]): List[String] =
-    records.map(_.name)
+  private def convertRecordsToSubdomains(records: SortedSet[Record]): Set[String] =
+    records.map(_.name).toSet
 
 }
 
 object ZoneTransferScanner {
-  def attemptScan(hostname: String, nameServers: List[String], logger: Logger)(implicit ec: ExecutionContext): Future[List[String]] =
-    new ZoneTransferScanner(hostname, nameServers, logger).scan()
+  def create(logger: Logger)(implicit ec: ExecutionContext): ZoneTransferScanner =
+    new ZoneTransferScanner(logger)
 }

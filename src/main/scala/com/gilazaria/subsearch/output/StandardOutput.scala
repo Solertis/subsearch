@@ -1,8 +1,9 @@
 package com.gilazaria.subsearch.output
 
 import com.gilazaria.subsearch.model.Record
-import com.gilazaria.subsearch.utils.{File, HostnameUtils}
+import com.gilazaria.subsearch.utils.File
 
+import scala.collection.SortedSet
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -21,19 +22,20 @@ class StandardOutput(private val file: Option[File], private val verbose: Boolea
     saveToFileFuture
   }
 
-  override def printRecords(records: List[Record]) = {
+  override def printRecords(records: SortedSet[Record]) = {
     if (verbose) printRecordsVerbose(records)
     else printRecordsNormal(records)
   }
 
-  protected def printRecordsVerbose(records: List[Record]) = {
+  protected def printRecordsVerbose(records: SortedSet[Record]) = {
     val lines: List[String] =
-      HostnameUtils
-        .distinctAndSortedNames(records)
+      records
+        .map(_.name)
+        .toList
         .flatMap {
           subdomain =>
-            val subdomainRecords: List[Record] = records.filter(_.name == subdomain)
-            val recordTypes: List[String] = HostnameUtils.distinctAndSortedTypes(subdomainRecords)
+            val subdomainRecords: SortedSet[Record] = records.filter(_.name == subdomain)
+            val recordTypes: List[String] = subdomainRecords.map(_.recordType).toList
 
             recordTypes.flatMap {
               recordType =>
@@ -58,12 +60,13 @@ class StandardOutput(private val file: Option[File], private val verbose: Boolea
   protected def formatRecordTypeAndSubdomainForPrinting(recordType: String, subdomain: String): String =
     prependTime(f"$recordType%-7s:  $subdomain")
 
-  protected def printRecordsNormal(records: List[Record]) = {
+  protected def printRecordsNormal(records: SortedSet[Record]) = {
     val lines: List[String] =
-      HostnameUtils
-        .distinctAndSortedNames(records)
-        .map(subdomain => (subdomain, HostnameUtils.recordTypesForSubdomainInRecords(subdomain, records)))
-        .map(data => s"${data._2.mkString(", ")}:  ${data._1}")
+      records
+        .map(_.name)
+        .toList
+        .map(subdomain => (subdomain, records.filter(_.name == subdomain).map(_.recordType)))
+        .map((data: (String, SortedSet[String])) => s"${data._2.mkString(", ")}:  ${data._1}")
 
     if (lines.nonEmpty)
       printSuccess(lines.mkString("\n"))
