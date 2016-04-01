@@ -3,6 +3,7 @@ package com.gilazaria.subsearch.connection
 import java.util
 
 import org.xbill.DNS._
+import scala.annotation.tailrec
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.JavaConverters._
@@ -10,6 +11,7 @@ import scala.util.Try
 
 class DNSLookup(private val hostname: String, private val resolvers: List[String]) {
   import DNSLookup.HostNotFoundException
+  import DNSLookup.ServerFailureException
 
   private val resolver: ExtendedResolver = new ExtendedResolver(resolvers.toArray)
 
@@ -25,6 +27,7 @@ class DNSLookup(private val hostname: String, private val resolvers: List[String
   private def queryA(hostname: String): Future[Try[List[String]]] = queryType(Type.A, hostname).map(recordsToData)
 
   private def queryType(recordType: Int, name: String): Future[Try[List[Record]]] = {
+    @tailrec
     def query(lookup: Lookup, attempt: Int = 1): List[Record] = {
       lookup.run()
 
@@ -33,13 +36,13 @@ class DNSLookup(private val hostname: String, private val resolvers: List[String
           Option(lookup.getAnswers)
             .getOrElse(Array.empty)
             .toList
-            .map(dnsRecord => Record(Type.string(dnsRecord.getType), dnsRecord.getName.toString, dnsRecord.rdataToString))
+            .map(dnsRecord => Record(dnsRecord.getName.toString, Type.string(dnsRecord.getType), dnsRecord.rdataToString))
 
         case Lookup.HOST_NOT_FOUND =>
           throw new HostNotFoundException(s"The hostname $name was not found.")
 
         case Lookup.UNRECOVERABLE =>
-          List.empty
+          throw new ServerFailureException(s"There was a data or server error with the resolver $resolver.")
 
         case Lookup.TYPE_NOT_FOUND =>
           List.empty
@@ -72,7 +75,7 @@ class DNSLookup(private val hostname: String, private val resolvers: List[String
           .asScala
           .toList
           .asInstanceOf[List[org.xbill.DNS.Record]]
-          .map(dnsRecord => Record(Type.string(dnsRecord.getType), dnsRecord.getName.toString, dnsRecord.rdataToString))
+          .map(dnsRecord => Record(dnsRecord.getName.toString, Type.string(dnsRecord.getType), dnsRecord.rdataToString))
           .filter(dnsRecord => !dnsRecord.name.startsWith(hostname))
       }
 
@@ -102,4 +105,5 @@ object DNSLookup {
     Future(Try(new SimpleResolver(resolver)).isSuccess)
 
   case class HostNotFoundException(msg: String) extends Exception(msg)
+  case class ServerFailureException(msg: String) extends Exception(msg)
 }

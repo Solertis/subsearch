@@ -107,7 +107,7 @@ class HostnameUtilsSpec extends FlatSpec {
 
   it should "return a distinct sorted list of record types for a specific subdomain" in {
     val subdomain = "aaaaa"
-    val records = List(Record("A", "aaaaa", "bbbbb"), Record("CNAME", "asdas", "asda"), Record("NS", "aaaaa", "bbbbb"), Record("A", "ccccc", "ddddd"), Record("AAAA", "a", "b"))
+    val records = List(Record("aaaaa", "A", "bbbbb"), Record("asdas", "CNAME", "asda"), Record("aaaaa", "NS", "bbbbb"), Record("ccccc", "A", "ddddd"), Record("a", "AAAA", "b"))
 
     val expected = List("A", "NS")
     val actual = recordTypesForSubdomainInRecords(subdomain, records)
@@ -118,7 +118,7 @@ class HostnameUtilsSpec extends FlatSpec {
   behavior of "distinctAndSortedNames"
 
   it should "return a distinct sorted list of record names" in {
-    val records = List(Record("A", "aaaaa", "bbbbb"), Record("CNAME", "asdas", "asda"), Record("NS", "aaaaa", "bbbbb"), Record("A", "ccccc", "ddddd"), Record("AAAA", "a", "b"))
+    val records = List(Record("aaaaa", "A", "bbbbb"), Record("asdas", "CNAME", "asda"), Record("aaaaa", "NS", "bbbbb"), Record("ccccc", "A", "ddddd"), Record("a", "AAAA", "b"))
 
     val expected = List("a", "aaaaa", "asdas", "ccccc")
     val actual = distinctAndSortedNames(records)
@@ -129,7 +129,7 @@ class HostnameUtilsSpec extends FlatSpec {
   behavior of "distinctAndSortedTypes"
 
   it should "return a distinct sorted list of record types" in {
-    val records = List(Record("A", "aaaaa", "bbbbb"), Record("CNAME", "asdas", "asda"), Record("A", "ccccc", "ddddd"), Record("AAAA", "a", "b"))
+    val records = List(Record("aaaaa", "A", "bbbbb"), Record("asdas", "CNAME", "asda"), Record("ccccc", "A", "ddddd"), Record("a", "AAAA", "b"))
 
     val expected = List("A", "AAAA", "CNAME")
     val actual = distinctAndSortedTypes(records)

@@ -64,11 +64,11 @@ class Controller(private val arguments: Arguments, private val logger: Logger) {
     val executorService = Executors.newFixedThreadPool(arguments.threads)
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutorService(executorService)
 
-    val authoritativeNameServers: List[String] = Await.result(AuthoritativeScanner.performScan(hostname, logger), TimeUtils.awaitDuration)
+    val authoritativeNameServers: Set[String] = retrieveAuthoritativeNameServers(hostname)
 
-    val zoneTransferSubdomains: List[String] =
-      if (!arguments.zoneTransfer) List.empty
-      else Await.result(ZoneTransferScanner.attemptScan(hostname, authoritativeNameServers, logger), TimeUtils.awaitDuration)
+    val zoneTransferSubdomains: Set[String] =
+      if (!arguments.zoneTransfer) Set.empty
+      else Await.result(ZoneTransferScanner.attemptScan(hostname, authoritativeNameServers.toList, logger), TimeUtils.awaitDuration).toSet
 
     val resolvers =
       if (arguments.includeAuthoritativeNameServersWithResolvers) (arguments.resolvers ++ authoritativeNameServers).distinct
@@ -77,9 +77,15 @@ class Controller(private val arguments: Arguments, private val logger: Logger) {
     if (arguments.includeAuthoritativeNameServersWithResolvers)
       logger.logAddingAuthNameServersToResolvers(resolvers.size)
 
-    val subdomainScannerArguments = SubdomainScannerArguments(hostname, arguments.wordlist.get, zoneTransferSubdomains, resolvers, arguments.threads, arguments.concurrentResolverRequests)
+    val subdomainScannerArguments = SubdomainScannerArguments(hostname, arguments.wordlist.get, zoneTransferSubdomains.toList, resolvers, arguments.threads, arguments.concurrentResolverRequests)
 
     SubdomainScanner.performScan(subdomainScannerArguments, logger)
+  }
+
+  private def retrieveAuthoritativeNameServers(hostname: String)(implicit ec: ExecutionContext): Set[String] = {
+    val scanner = AuthoritativeScanner.create(logger)
+    val lookup = scanner.performLookupOnHostname(hostname, arguments.resolvers.head)
+    Await.result(lookup, TimeUtils.awaitDuration)
   }
 
   def exitGracefully() =
