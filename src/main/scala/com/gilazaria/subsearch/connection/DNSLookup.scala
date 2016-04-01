@@ -5,7 +5,7 @@ import com.gilazaria.subsearch.model.{Record, RecordType}
 import scala.collection.SortedSet
 import scala.util.Try
 
-trait DNSLookupTrait {
+trait DNSLookup {
   def performQueryOfTypeANY(hostname: String, resolver: String): Try[SortedSet[Record]] =
     performQueryOfType(hostname, resolver, RecordType.ANY)
 

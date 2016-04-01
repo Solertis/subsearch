@@ -9,7 +9,7 @@ import scala.util.Try
 import scala.collection.JavaConverters._
 import scala.collection.SortedSet
 
-class DNSLookupImpl extends DNSLookupTrait {
+class DNSLookupImpl extends DNSLookup {
   import DNSLookupImpl.{HostNotFoundException, ServerFailureException}
 
   override def performQueryOfType(hostname: String, resolver: String, recordType: RecordType): Try[SortedSet[Record]] =
@@ -72,7 +72,7 @@ class DNSLookupImpl extends DNSLookupTrait {
 }
 
 object DNSLookupImpl {
-  def create(): DNSLookupTrait =
+  def create(): DNSLookup =
     new DNSLookupImpl()
 
   case class HostNotFoundException(msg: String) extends Exception(msg)

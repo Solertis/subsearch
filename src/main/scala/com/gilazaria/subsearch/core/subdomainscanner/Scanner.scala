@@ -1,6 +1,6 @@
 package com.gilazaria.subsearch.core.subdomainscanner
 
-import com.gilazaria.subsearch.connection.{DNSLookupImpl, DNSLookupTrait}
+import com.gilazaria.subsearch.connection.{DNSLookupImpl, DNSLookup}
 import com.gilazaria.subsearch.core.subdomainscanner.ScannerMessage._
 import com.gilazaria.subsearch.core.subdomainscanner.DispatcherMessage.{AvailableForScan, CompletedScan, FailedScan, PriorityScanSubdomain}
 import com.gilazaria.subsearch.core.subdomainscanner.ListenerMessage.{FoundSubdomain, ScanTimeout}
@@ -15,7 +15,7 @@ object Scanner {
 }
 
 class Scanner(listener: ActorRef, hostname: String)(implicit ec: ExecutionContext) extends Actor {
-  private val lookup: DNSLookupTrait = DNSLookupImpl.create()
+  private val lookup: DNSLookup = DNSLookupImpl.create()
 
   override def postRestart(reason: Throwable) = {
     preStart

@@ -1,6 +1,6 @@
 package com.gilazaria.subsearch.core
 
-import com.gilazaria.subsearch.connection.{DNSLookupImpl, DNSLookupTrait}
+import com.gilazaria.subsearch.connection.{DNSLookupImpl, DNSLookup}
 import com.gilazaria.subsearch.model.{Record, RecordType}
 import com.gilazaria.subsearch.output.Logger
 
@@ -9,7 +9,7 @@ import scala.util.Try
 import scala.collection.SortedSet
 
 class ZoneTransferScanner(logger: Logger)(implicit ec: ExecutionContext) {
-  val lookup: DNSLookupTrait = DNSLookupImpl.create()
+  val lookup: DNSLookup = DNSLookupImpl.create()
 
   def performLookup(hostname: String, resolvers: Set[String]): Future[Set[String]] = {
     logger.logStartedZoneTransfer()

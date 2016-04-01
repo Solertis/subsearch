@@ -1,14 +1,14 @@
 package com.gilazaria.subsearch.core
 
 import com.gilazaria.subsearch.output.Logger
-import com.gilazaria.subsearch.connection.{DNSLookupImpl, DNSLookupTrait}
+import com.gilazaria.subsearch.connection.{DNSLookupImpl, DNSLookup}
 import com.gilazaria.subsearch.model.{Record, RecordType}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.collection.SortedSet
 
 class AuthoritativeScanner(private val logger: Logger)(implicit ec: ExecutionContext) {
-  private val lookup: DNSLookupTrait = DNSLookupImpl.create()
+  private val lookup: DNSLookup = DNSLookupImpl.create()
 
   def performLookupOnHostname(hostname: String, resolver: String): Future[Set[String]] = {
     logger.logAuthoritativeScanStarted()
