@@ -3,10 +3,9 @@ TODO: Prevent Listener from printing messages after pausing
 TODO: Implement third party services as scan options (e.g. DNSDumpster, VirusTotal, autogeneration of short letter and number combinations, http://bgp.he.net lookup)
 TODO: Read file resolvers in to memory as they're used
 TODO: Create a list of found subdomains so that they are not rescanned
-TODO: Provide flag to ignore lack of DNS records and attempt scan anyway
 TODO: Read in previously found subdomains csv file
 TODO: Write more unit tests
-TODO: Implement RRL detection, e.g:
+TODO: Implement stop asking for ANY detection, e.g:
 
 ; <<>> DiG 9.8.3-P1 <<>> ANY some.domain.net
 ;; global options: +cmd
@@ -20,4 +19,5 @@ some.domain.net.	IN	ANY
 ;; ANSWER SECTION:
 some.domain.net. 5	IN	HINFO	"Please stop asking for ANY" "See draft-ietf-dnsop-refuse-any"
 
+TODO: Implement RRL prevention in the form of multiple resolver lookups per subdomain
 TODO: Figure out a way to make writing to file a lot faster
