@@ -47,7 +47,7 @@ class Scanner(listener: ActorRef, hostname: String)(implicit ec: ExecutionContex
           listener ! FoundSubdomain(subdomain, records)
 
         records
-          .filter(record => List("CNAME", "SRV", "MX").contains(record.recordType))
+          .filter(_.recordType.isOneOf("CNAME", "SRV", "MX"))
           .filter(record => record.data.endsWith(hostname))
           .map(_.data)
           .foreach((subdomain: String) => context.parent ! PriorityScanSubdomain(subdomain))

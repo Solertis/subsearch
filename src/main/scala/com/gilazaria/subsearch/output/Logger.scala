@@ -122,7 +122,7 @@ class Logger(private val verbose: Boolean, csvReportFile: Option[File], stdoutRe
   private var allSeenRecords: SortedSet[Record] = SortedSet.empty
   private def filterOutSeenAndInvalidRecords(records: SortedSet[Record]): SortedSet[Record] =
     records
-      .filter(dnsRecord => !List("NSEC", "RRSIG", "SOA").contains(dnsRecord.recordType))
+      .filter(!_.recordType.isOneOf("NSEC", "RRSIG", "SOA"))
       .diff(allSeenRecords)
 
   private def saveNewRecords(records: SortedSet[Record]) =

@@ -1,8 +1,10 @@
 package com.gilazaria.subsearch.output
 
 import java.io.PrintStream
-import com.gilazaria.subsearch.model.Record
+
+import com.gilazaria.subsearch.model.{Record, RecordType}
 import pl.project13.scala.rainbow.Rainbow._
+
 import scala.tools.jline.TerminalFactory
 import scala.collection.SortedSet
 
@@ -90,7 +92,7 @@ class CLIOutput(private val printStream: PrintStream, private val verbose: Boole
     super.printRecordsDuringScan(records)
   }
 
-  override protected def formatRecordTypeAndSubdomainForPrinting(recordType: String, subdomain: String): String =
+  override protected def formatRecordTypeAndSubdomainForPrinting(recordType: RecordType, subdomain: String): String =
     super.formatRecordTypeAndSubdomainForPrinting(recordType,subdomain).green
 }
 

@@ -18,17 +18,13 @@ class DNSLookupImpl extends DNSLookup {
     else
       Try(performLookup(hostname, resolver, recordType))
 
-  private[this] def performZoneTransfer(hostname: String, resolver: String): SortedSet[Record] = {
+  private[connection] def performZoneTransfer(hostname: String, resolver: String): SortedSet[Record] = {
     val transfer: ZoneTransferIn = ZoneTransferIn.newAXFR(new Name(hostname), resolver, null)
-
-    recordsFromTransfer(transfer)
-      .getOrElse(Set.empty)
-      .map(dnsRecord => Record(dnsRecord.getName.toString, Type.string(dnsRecord.getType), dnsRecord.rdataToString))
-      .toSortedSet
-      .filter(dnsRecord => !dnsRecord.name.startsWith(hostname))
+    val xbillRecords: Set[org.xbill.DNS.Record] = xbillRecordsFromTransfer(transfer).getOrElse(Set.empty)
+    recordsFromXbillRecords(hostname, xbillRecords)
   }
 
-  private[this] def recordsFromTransfer(transfer: ZoneTransferIn): Try[Set[org.xbill.DNS.Record]] = {
+  private[connection] def xbillRecordsFromTransfer(transfer: ZoneTransferIn): Try[Set[org.xbill.DNS.Record]] = {
     Try {
       Option(transfer.run())
         .map(_.asScala.toSet)
@@ -37,14 +33,20 @@ class DNSLookupImpl extends DNSLookup {
     }
   }
 
-  private[this] def performLookup(hostname: String, resolver: String, recordType: RecordType): SortedSet[Record] = {
+  private[connection] def recordsFromXbillRecords(hostname: String, xbillRecords: Set[org.xbill.DNS.Record]): SortedSet[Record] =
+    xbillRecords
+      .map(dnsRecord => Record(dnsRecord.getName.toString, RecordType.fromInt(dnsRecord.getType), dnsRecord.rdataToString))
+      .toSortedSet
+      .filter(dnsRecord => !dnsRecord.name.startsWith(hostname))
+
+  private[connection] def performLookup(hostname: String, resolver: String, recordType: RecordType): SortedSet[Record] = {
     val lookup = new Lookup(hostname, recordType.intValue)
     lookup.setResolver(new SimpleResolver(resolver))
     query(hostname, resolver, lookup)
   }
 
   @tailrec
-  private[this] def query(hostname: String, resolver: String, lookup: Lookup, attempt: Int = 1): SortedSet[Record] = {
+  private[connection] def query(hostname: String, resolver: String, lookup: Lookup, attempt: Int = 1): SortedSet[Record] = {
     lookup.run()
 
     lookup.getResult match {
@@ -52,7 +54,7 @@ class DNSLookupImpl extends DNSLookup {
         Option(lookup.getAnswers)
           .map(_.toSet)
           .getOrElse(Set.empty)
-          .map(dnsRecord => Record(dnsRecord.getName.toString, Type.string(dnsRecord.getType), dnsRecord.rdataToString))
+          .map(dnsRecord => Record(dnsRecord.getName.toString, RecordType.fromInt(dnsRecord.getType), dnsRecord.rdataToString))
           .toSortedSet
 
       case Lookup.HOST_NOT_FOUND =>

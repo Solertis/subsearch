@@ -1,6 +1,6 @@
 package com.gilazaria.subsearch.output
 
-import com.gilazaria.subsearch.model.Record
+import com.gilazaria.subsearch.model.{Record, RecordType}
 import com.gilazaria.subsearch.utils.File
 
 import scala.collection.SortedSet
@@ -35,7 +35,7 @@ class StandardOutput(private val file: Option[File], private val verbose: Boolea
         .flatMap {
           subdomain =>
             val subdomainRecords: SortedSet[Record] = records.filter(_.name == subdomain)
-            val recordTypes: List[String] = subdomainRecords.map(_.recordType).toList
+            val recordTypes: SortedSet[RecordType] = subdomainRecords.map(_.recordType)
 
             recordTypes.flatMap {
               recordType =>
@@ -43,9 +43,9 @@ class StandardOutput(private val file: Option[File], private val verbose: Boolea
                   case Record(_, _, data) =>
                     val msg = formatRecordTypeAndSubdomainForPrinting(recordType, subdomain)
 
-                    if (List("A", "AAAA", "CNAME", "NS", "SRV").contains(recordType))
+                    if (recordType.isOneOf("A", "AAAA", "CNAME", "NS", "SRV"))
                       s"$msg  ->  $data"
-                    else if (recordType == "MX")
+                    else if (recordType.stringValue == "MX")
                       s"$msg  @@  $data"
                     else
                       s"$msg  --  $data"
@@ -57,8 +57,8 @@ class StandardOutput(private val file: Option[File], private val verbose: Boolea
       println(lines.mkString("\n"))
   }
 
-  protected def formatRecordTypeAndSubdomainForPrinting(recordType: String, subdomain: String): String =
-    prependTime(f"$recordType%-7s:  $subdomain")
+  protected def formatRecordTypeAndSubdomainForPrinting(recordType: RecordType, subdomain: String): String =
+    prependTime(f"${recordType.toString}%-7s:  $subdomain")
 
   protected def printRecordsNormal(records: SortedSet[Record]) = {
     val lines: List[String] =
@@ -66,7 +66,7 @@ class StandardOutput(private val file: Option[File], private val verbose: Boolea
         .map(_.name)
         .toList
         .map(subdomain => (subdomain, records.filter(_.name == subdomain).map(_.recordType)))
-        .map((data: (String, SortedSet[String])) => s"${data._2.mkString(", ")}:  ${data._1}")
+        .map((data: (String, SortedSet[RecordType])) => s"${data._2.mkString(", ")}:  ${data._1}")
 
     if (lines.nonEmpty)
       printSuccess(lines.mkString("\n"))
