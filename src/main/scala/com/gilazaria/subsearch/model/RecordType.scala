@@ -23,8 +23,9 @@ object RecordType {
   lazy val CNAME = RecordType("CNAME")
   lazy val MX    = RecordType("MX")
   lazy val NS    = RecordType("NS")
+  lazy val SOA   = RecordType("SOA")
 
-  private lazy val types: Set[RecordType] = Set(A, AAAA, ANY, AXFR, CNAME, MX, NS)
+  private lazy val types: Set[RecordType] = Set(A, AAAA, ANY, AXFR, CNAME, MX, NS, SOA)
 
   def fromInt(int: Int): RecordType = {
     val matchingTypes: Set[RecordType] = types.filter(_.intValue == int)

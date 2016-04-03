@@ -40,13 +40,13 @@ class DNSLookupImpl extends DNSLookup {
       .filter(dnsRecord => !dnsRecord.name.startsWith(hostname))
 
   private[connection] def performLookup(hostname: String, resolver: String, recordType: RecordType): SortedSet[Record] = {
-    val lookup = new Lookup(hostname, recordType.intValue)
+    val lookup: LookupFactory = new LookupFactoryImpl(hostname, recordType.intValue)
     lookup.setResolver(new SimpleResolver(resolver))
     query(hostname, resolver, lookup)
   }
 
   @tailrec
-  private[connection] def query(hostname: String, resolver: String, lookup: Lookup, attempt: Int = 1): SortedSet[Record] = {
+  private[connection] final def query(hostname: String, resolver: String, lookup: LookupFactory, attempt: Int = 1): SortedSet[Record] = {
     lookup.run()
 
     lookup.getResult match {
