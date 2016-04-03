@@ -19,12 +19,14 @@ class DNSLookupImpl extends DNSLookup {
       Try(performLookup(hostname, resolver, recordType))
 
   private[connection] def performZoneTransfer(hostname: String, resolver: String): SortedSet[Record] = {
-    val transfer: ZoneTransferIn = ZoneTransferIn.newAXFR(new Name(hostname), resolver, null)
+    val transfer: ZoneTransferInFactory = ZoneTransferInFactoryImpl.newAXFR(new Name(hostname), resolver, null)
     val xbillRecords: Set[org.xbill.DNS.Record] = xbillRecordsFromTransfer(transfer).getOrElse(Set.empty)
-    recordsFromXbillRecords(hostname, xbillRecords)
+
+    recordsFromXbillRecords(xbillRecords)
+      .filter(dnsRecord => !dnsRecord.name.startsWith(hostname))
   }
 
-  private[connection] def xbillRecordsFromTransfer(transfer: ZoneTransferIn): Try[Set[org.xbill.DNS.Record]] = {
+  private[connection] def xbillRecordsFromTransfer(transfer: ZoneTransferInFactory): Try[Set[org.xbill.DNS.Record]] = {
     Try {
       Option(transfer.run())
         .map(_.asScala.toSet)
@@ -32,12 +34,6 @@ class DNSLookupImpl extends DNSLookup {
         .asInstanceOf[Set[org.xbill.DNS.Record]]
     }
   }
-
-  private[connection] def recordsFromXbillRecords(hostname: String, xbillRecords: Set[org.xbill.DNS.Record]): SortedSet[Record] =
-    xbillRecords
-      .map(dnsRecord => Record(dnsRecord.getName.toString, RecordType.fromInt(dnsRecord.getType), dnsRecord.rdataToString))
-      .toSortedSet
-      .filter(dnsRecord => !dnsRecord.name.startsWith(hostname))
 
   private[connection] def performLookup(hostname: String, resolver: String, recordType: RecordType): SortedSet[Record] = {
     val lookup: LookupFactory = new LookupFactoryImpl(hostname, recordType.intValue)
@@ -51,11 +47,12 @@ class DNSLookupImpl extends DNSLookup {
 
     lookup.getResult match {
       case Lookup.SUCCESSFUL =>
-        Option(lookup.getAnswers)
-          .map(_.toSet)
-          .getOrElse(Set.empty)
-          .map(dnsRecord => Record(dnsRecord.getName.toString, RecordType.fromInt(dnsRecord.getType), dnsRecord.rdataToString))
-          .toSortedSet
+        val xbillRecords =
+          Option(lookup.getAnswers)
+            .map(_.toSet)
+            .getOrElse(Set.empty)
+
+        recordsFromXbillRecords(xbillRecords)
 
       case Lookup.HOST_NOT_FOUND =>
         throw new HostNotFoundException(s"The hostname $hostname was not found.")
@@ -71,6 +68,11 @@ class DNSLookupImpl extends DNSLookup {
         else query(hostname, resolver, lookup, attempt + 1)
     }
   }
+
+  private[connection] def recordsFromXbillRecords(xbillRecords: Set[org.xbill.DNS.Record]): SortedSet[Record] =
+    xbillRecords
+      .map(xbillRecord => Record(xbillRecord.getName.toString, RecordType.fromInt(xbillRecord.getType), xbillRecord.rdataToString))
+      .toSortedSet
 }
 
 object DNSLookupImpl {
