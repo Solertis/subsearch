@@ -7,45 +7,32 @@ import com.gilazaria.subsearch.model.{Record, RecordType}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.collection.SortedSet
 
-class AuthoritativeScanner(private val logger: Logger)(implicit ec: ExecutionContext) {
-  private val lookup: DNSLookup = DNSLookupImpl.create()
-
+class AuthoritativeScanner private[core] (private val logger: Logger, private val lookup: DNSLookup)(implicit ec: ExecutionContext) {
   def performLookupOnHostname(hostname: String, resolver: String): Future[Set[String]] = {
     logger.logAuthoritativeScanStarted()
 
-    nameServersForHostname(hostname, resolver)
+    dataFromQuery(hostname, resolver, RecordType.NS)
       .flatMap(nameservers => ipsForNameServers(nameservers, resolver))
       .map(printAuthoritativeNameServers)
   }
 
-
-  private[this] def nameServersForHostname(hostname: String, resolver: String): Future[Set[String]] = {
-    Future {
-      lookup
-        .performQueryOfType(hostname, resolver, RecordType.NS)
-        .getOrElse(SortedSet.empty[Record])
-        .map(_.data)
-        .toSet
-    }
-  }
-
-  private[this] def ipsForNameServers(nameservers: Set[String], resolver: String): Future[Set[String]] = {
+  private[core] def ipsForNameServers(nameServers: Set[String], resolver: String): Future[Set[String]] = {
     Future
-      .sequence(nameservers.map(ns => ipsForNameServer(ns, resolver)))
+      .sequence(nameServers.map(ns => dataFromQuery(ns, resolver, RecordType.A)))
       .map(_.flatten)
   }
 
-  private[this] def ipsForNameServer(nameserver: String, resolver: String): Future[Set[String]] = {
+  private[core] def dataFromQuery(hostname: String, resolver: String, recordType: RecordType): Future[Set[String]] = {
     Future {
       lookup
-        .performQueryOfType(nameserver, resolver, RecordType.A)
+        .performQueryOfType(hostname, resolver, recordType)
         .getOrElse(SortedSet.empty[Record])
         .map(_.data)
         .toSet
     }
   }
 
-  private def printAuthoritativeNameServers(nameServers: Set[String]) = {
+  private[core] def printAuthoritativeNameServers(nameServers: Set[String]) = {
     nameServers.foreach(logger.logAuthoritativeNameServer)
     logger.logAuthoritativeScanCompleted()
     nameServers
@@ -54,5 +41,5 @@ class AuthoritativeScanner(private val logger: Logger)(implicit ec: ExecutionCon
 
 object AuthoritativeScanner {
   def create(logger: Logger)(implicit ec: ExecutionContext): AuthoritativeScanner =
-    new AuthoritativeScanner(logger)
+    new AuthoritativeScanner(logger, DNSLookupImpl.create())
 }
