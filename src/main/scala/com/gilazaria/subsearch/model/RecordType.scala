@@ -16,16 +16,22 @@ case class RecordType(stringValue: String) extends Ordered[RecordType] {
 }
 
 object RecordType {
-  lazy val A     = RecordType("A")
-  lazy val AAAA  = RecordType("AAAA")
-  lazy val ANY   = RecordType("ANY")
-  lazy val AXFR  = RecordType("AXFR")
-  lazy val CNAME = RecordType("CNAME")
-  lazy val MX    = RecordType("MX")
-  lazy val NS    = RecordType("NS")
-  lazy val SOA   = RecordType("SOA")
+  lazy val A      = RecordType("A")
+  lazy val AAAA   = RecordType("AAAA")
+  lazy val ANY    = RecordType("ANY")
+  lazy val AXFR   = RecordType("AXFR")
+  lazy val CNAME  = RecordType("CNAME")
+  lazy val MX     = RecordType("MX")
+  lazy val NS     = RecordType("NS")
+  lazy val SOA    = RecordType("SOA")
+  lazy val RRSIG  = RecordType("RRSIG")
+  lazy val HINFO  = RecordType("HINFO")
+  lazy val DNSKEY = RecordType("DNSKEY")
+  lazy val NSEC   = RecordType("NSEC")
+  lazy val PTR    = RecordType("PTR")
+  lazy val SRV    = RecordType("SRV")
 
-  private lazy val types: Set[RecordType] = Set(A, AAAA, ANY, AXFR, CNAME, MX, NS, SOA)
+  private lazy val types: Set[RecordType] = Set(A, AAAA, ANY, AXFR, CNAME, MX, NS, SOA, RRSIG, HINFO, DNSKEY, NSEC, PTR, SRV)
 
   def fromInt(int: Int): RecordType = {
     val matchingTypes: Set[RecordType] = types.filter(_.intValue == int)
