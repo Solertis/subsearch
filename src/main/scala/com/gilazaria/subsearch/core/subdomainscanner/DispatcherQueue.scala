@@ -36,6 +36,7 @@ class DispatcherQueue(private val hostname: String,
   def recycleResolver(resolver: String) =
     if (!concurrentResolvers && !blacklistedResolvers.contains(resolver)) resolversQueue.enqueue(resolver)
 
+  //TODO: This should be a Try because what if all the resolvers are blacklisted and the method is run? Illegal argument exception, that's what.
   def dequeueResolver(): String =
     if (!concurrentResolvers) resolversQueue.dequeue()
     else resolvers.diff(blacklistedResolvers)(Random.nextInt(resolvers.diff(blacklistedResolvers).size))
