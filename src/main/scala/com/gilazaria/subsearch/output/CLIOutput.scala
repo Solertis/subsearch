@@ -10,7 +10,7 @@ import scala.collection.SortedSet
 
 class CLIOutput(private val printStream: PrintStream, private val verbose: Boolean) extends StandardOutput(None, verbose) {
   override def print(string: String) = printStream.print(string)
-  private def eraseln() = print("\033[1K\033[0G")
+  private def eraseln() = print("\u001b[1K\u001b[0G")
 
   override def printSuccessWithoutTime(string: String) = println(string.green)
   override def printStatusWithoutTime(string: String) = println(string.yellow.bold)
