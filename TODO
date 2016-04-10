@@ -21,4 +21,3 @@ some.domain.net. 5	IN	HINFO	"Please stop asking for ANY" "See draft-ietf-dnsop-r
 
 TODO: Implement RRL prevention in the form of multiple resolver lookups per subdomain
 TODO: Implement multiple verbosity options. 1st shows all records, 2nd also says when blacklisting, 3rd also says when times out fails
-TODO: Change dequeueResolver in DispatcherQueue to return a Try. See class for more info

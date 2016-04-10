@@ -36,13 +36,12 @@ class DispatcherQueue(private val hostname: String,
   def remainingNumberOfSubdomains: Int = prioritySubdomainsQueue.size
   def remainingNumberOfResolvers: Int = resolversQueue.size
   def isOutOfSubdomains: Boolean = prioritySubdomainsQueue.isEmpty && !subdomainsIterator.hasNext
-  def isOutOfResolvers: Boolean = resolversQueue.isEmpty
+  def isOutOfResolvers: Boolean = resolversQueue.isEmpty || blacklistedResolvers.size == resolvers.size
   def requeueSubdomain(subdomain: String) = prioritySubdomainsQueue.enqueue(subdomain)
 
   def recycleResolver(resolver: String) =
     if (!concurrentResolvers && !blacklistedResolvers.contains(resolver)) resolversQueue.enqueue(resolver)
 
-  //TODO: This should be a Try because what if all the resolvers are blacklisted and the method is run? Illegal argument exception, that's what.
   def dequeueResolver(): String =
     if (!concurrentResolvers) resolversQueue.dequeue()
     else resolvers.diff(blacklistedResolvers)(Random.nextInt(resolvers.diff(blacklistedResolvers).size))
