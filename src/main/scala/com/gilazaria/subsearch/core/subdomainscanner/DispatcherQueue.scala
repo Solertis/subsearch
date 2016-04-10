@@ -6,13 +6,19 @@ import scala.collection.mutable
 import scala.util.Random
 
 object DispatcherQueue {
-  def create(hostname: String, wordlist: File, omitSubdomains: List[String], resolvers: List[String], concurrentResolvers: Boolean): DispatcherQueue =
-    new DispatcherQueue(hostname, wordlist, omitSubdomains, resolvers, concurrentResolvers)
+  def create(hostname: String,
+             wordlist: File,
+             omitSubdomains: List[String],
+             prioritySubdomains: List[String],
+             resolvers: List[String],
+             concurrentResolvers: Boolean): DispatcherQueue =
+    new DispatcherQueue(hostname, wordlist, omitSubdomains, prioritySubdomains, resolvers, concurrentResolvers)
 }
 
 class DispatcherQueue(private val hostname: String,
                       private val wordlist: File,
                       private val omitSubdomains: List[String],
+                      private val prioritySubdomains: List[String],
                       private val resolvers: List[String],
                       private val concurrentResolvers: Boolean) {
 
@@ -22,7 +28,7 @@ class DispatcherQueue(private val hostname: String,
   private var allSeenSubdomains: Set[String] = omitSubdomains.toSet
 
   private val subdomainsIterator: Iterator[String] = wordlist.linesIterator
-  private val prioritySubdomainsQueue: mutable.Queue[String] = mutable.Queue()
+  private val prioritySubdomainsQueue: mutable.Queue[String] = mutable.Queue() ++= prioritySubdomains
   private val resolversQueue: mutable.Queue[String] = mutable.Queue() ++= Random.shuffle(resolvers).toSet
 
   private var blacklistedResolvers: List[String] = List.empty

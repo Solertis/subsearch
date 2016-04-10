@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="vAWNZCy-5XAPGRgA2_NY5HictfnByvgpqOLQUAmVZW0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Find dns records in order to identify the Internet footprint of an organization. Recon that enables deeper security assessments and understanding of the potential attack surface.">
+    <meta name="author" content="">
+    <link rel="icon" href="/static/favicon.ico">
+    <title>DNSdumpster.com - dns recon and research, find and lookup dns records</title>
+    <!-- Bootstrap core CSS -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="/static/cover.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="site-wrapper">
+    <div class="site-wrapper-inner">
+        <!-- Section 1 -->
+        <section id="intro" data-speed="6" data-type="background">
+            <div class="container">
+                <div class="cover-container">
+                    <div class="inner cover">
+                        <h1 class="cover-heading">dns recon & research, find & lookup dns records</h1>
+                        <p class="lead">
+                        <div id="hideform">
+                            <form role="form" action="." method="post"><input type='hidden' name='csrfmiddlewaretoken' value='xSbZaLmJshjKSCuC8Izcl94s9UNz1C0H' />
+                                <div class="form-group">
+                                    <div class="col-md-2"></div><div class="col-md-6">
+                                    <input class="form-control" type="text" placeholder="exampledomain.com" name="targetip" id="regularInput">
+                                </div></div>
+                                <div align="left" id="formsubmit"><button type="submit" class="btn btn-default">Search <span class="glyphicon glyphicon-chevron-right"></span></button></div>
+                            </form></div></div>
+                    <div class="row"><div class="col-md-2"></div><div class="col-md-8">
+                        <div id="showloading" style="color: #fff;">Loading...<br>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-success progress-bar-striped active" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                                </div></div></div></div></div>
+                    </P>
+
+
+
+                    <p><h4 style="color: #00CC00; text-align: left; font-size: 1.5em; line-height: 2.7em;">Showing results for <span style="font-weight: 700;">exampledomain.com</span></h4></p>
+                    <div style="text-align: right; font-size: 1em;"><a href="#dnsanchor"><span class="label label-default">DNS Servers</span></a> <a href="#mxanchor"><span class="label label-default">MX Records</span></a> <a href="#txtanchor"><span class="label label-default">TXT Records</span></a> <a href="#hostanchor"><span class="label label-default">Host (A) Records</span></a> <a href="#domainmap"><span class="label label-default">Domain Map</span></a></div><div class="clearfix" style="height: 30px;"></div>
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <p style="color: #ddd; font-family: 'Courier New', Courier, monospace; text-align: left; padding-left: 30px; padding-bottom: 20px;">Hosting (IP block owners)</P>
+                                <canvas id="hosting" height="380" width="300"></canvas></div>
+                            <div class="col-md-8">
+                                <p style="color: #ddd; font-family: 'Courier New', Courier, monospace; text-align: left; padding-left: 30px;">GeoIP of Host Locations</P>
+                                <div id="world-map" style="width: 480px; height: 380px"></div>
+                            </div>                        </div>
+                    </div>
+
+                    <p style="color: #ddd; font-family: 'Courier New', Courier, monospace; text-align: left;"><a name="dnsanchor"></a>DNS Servers</P>
+                    <div class="table-responsive" style="text-align: left;">
+                        <table class="table" style="font-size: 1.1em; border-color: #777;">
+
+                            <tr><td class="col-md-4">ns3.namefind.com.<br>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/reverseiplookup/?q=216.69.185.65" data-target="#myModal"><span class="glyphicon glyphicon-th" data-toggle="tooltip" data-placement="top" title="Find hosts (A records) sharing this IP address"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/httpheaders/?q=http://" data-target="#myModal"><span class="glyphicon glyphicon-globe" data-toggle="tooltip" data-placement="top" title="Get HTTP Headers from IP address"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/mtr/?q=216.69.185.65" data-target="#myModal"><span class="glyphicon glyphicon-random" data-toggle="tooltip" data-placement="top" title="Trace path to IP address using MTR"></span></a> <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/findshareddns/?q=ns3.namefind.com." data-target="#myModal"><span class="glyphicon glyphicon-cloud-download" data-toggle="tooltip" data-placement="top" title="Find hosts sharing this DNS server"></span></a>
+                            </td><td class="col-md-3">216.69.185.65<br><span style="font-size: 0.9em; color: #eee;">ip-216-69-185-65.ip.secureserver.net</span></td><td class="col-md-3">AS26496 GoDaddy.com, LLC<br><span style="font-size: 0.9em; color: #eee;">United States</span></td></tr>
+
+                        </table>
+                    </div>
+
+                    <p style="color: #ddd; font-family: 'Courier New', Courier, monospace; text-align: left;"><a name="mxanchor"></a>MX Records <span style="font-size: 0.8em; color: #777;">** This is where email for the domain goes...</P>
+                    <div class="table-responsive" style="text-align: left;">
+                        <table class="table" style="font-size: 1.1em; font-family: 'Courier New', Courier, monospace;">
+
+                        </table>
+                    </div>
+
+                    <p style="color: #ddd; font-family: 'Courier New', Courier, monospace; text-align: left;"><a name="txtanchor"></a>TXT Records <span style="font-size: 0.8em; color: #777;">** Find more hosts in Sender Policy Framework (SPF) configurations</span></P>
+                    <div class="table-responsive" style="text-align: left;">
+                        <table class="table" style="font-size: 1.1em; font-family: 'Courier New', Courier, monospace;">
+
+                        </table>
+                    </div>
+
+
+                    <p style="color: #ddd; font-family: 'Courier New', Courier, monospace; text-align: left;"><a name="hostanchor"></a>Host Records (A) <span style="font-size: 0.8em; color: #777;">** this data may not be current as it uses a static database (updated monthly)</span> </P>
+                    <div class="table-responsive" style="text-align: left;">
+                        <table class="table" style="font-size: 1.1em; font-family: 'Courier New', Courier, monospace;">
+
+                            <tr><td class="col-md-4">vps32272377.exampledomain.com<br>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/reverseiplookup/?q=184.168.221.17" data-target="#myModal"><span class="glyphicon glyphicon-th" data-toggle="tooltip" data-placement="top" title="Find hosts sharing this IP address"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/httpheaders/?q=http://vps32272377.exampledomain.com" data-target="#myModal"><span class="glyphicon glyphicon-globe" data-toggle="tooltip" data-placement="top" title="Get HTTP Headers"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/mtr/?q=184.168.221.17" data-target="#myModal"><span class="glyphicon glyphicon-random" data-toggle="tooltip" data-placement="top" title="Trace path"></span></a> <span style="font-size: 0.9em; color: #eee; margin-left: 20px; color: #0C0;"  data-toggle="tooltip" data-placement="top" title="HTTP Server found in Global Scan data (Passive)">Microsoft-IIS/7.5
+</span>
+                            </td><td class="col-md-3">184.168.221.17<br><span style="font-size: 0.9em; color: #eee;">ip-184-168-221-17.ip.secureserver.net</span></td><td class="col-md-3">AS26496 GoDaddy.com, LLC<br><span style="font-size: 0.9em; color: #eee;">United States</span></td></tr>
+
+                            <tr><td class="col-md-4">exampledomain.com<br>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/reverseiplookup/?q=184.168.221.27" data-target="#myModal"><span class="glyphicon glyphicon-th" data-toggle="tooltip" data-placement="top" title="Find hosts sharing this IP address"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/httpheaders/?q=http://exampledomain.com" data-target="#myModal"><span class="glyphicon glyphicon-globe" data-toggle="tooltip" data-placement="top" title="Get HTTP Headers"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/mtr/?q=184.168.221.27" data-target="#myModal"><span class="glyphicon glyphicon-random" data-toggle="tooltip" data-placement="top" title="Trace path"></span></a> <span style="font-size: 0.9em; color: #eee; margin-left: 20px; color: #0C0;"  data-toggle="tooltip" data-placement="top" title="HTTP Server found in Global Scan data (Passive)">Microsoft-IIS/7.5
+</span>
+                            </td><td class="col-md-3">184.168.221.27<br><span style="font-size: 0.9em; color: #eee;">ip-184-168-221-27.ip.secureserver.net</span></td><td class="col-md-3">AS26496 GoDaddy.com, LLC<br><span style="font-size: 0.9em; color: #eee;">United States</span></td></tr>
+
+                            <tr><td class="col-md-4">vps31252317.exampledomain.com<br>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/reverseiplookup/?q=184.168.221.4" data-target="#myModal"><span class="glyphicon glyphicon-th" data-toggle="tooltip" data-placement="top" title="Find hosts sharing this IP address"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/httpheaders/?q=http://vps31252317.exampledomain.com" data-target="#myModal"><span class="glyphicon glyphicon-globe" data-toggle="tooltip" data-placement="top" title="Get HTTP Headers"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/mtr/?q=184.168.221.4" data-target="#myModal"><span class="glyphicon glyphicon-random" data-toggle="tooltip" data-placement="top" title="Trace path"></span></a> <span style="font-size: 0.9em; color: #eee; margin-left: 20px; color: #0C0;"  data-toggle="tooltip" data-placement="top" title="HTTP Server found in Global Scan data (Passive)">Microsoft-IIS/7.5
+</span>
+                            </td><td class="col-md-3">184.168.221.4<br><span style="font-size: 0.9em; color: #eee;">ip-184-168-221-4.ip.secureserver.net</span></td><td class="col-md-3">AS26496 GoDaddy.com, LLC<br><span style="font-size: 0.9em; color: #eee;">United States</span></td></tr>
+
+                            <tr><td class="col-md-4">vps22351531.exampledomain.com<br>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/reverseiplookup/?q=184.168.221.7" data-target="#myModal"><span class="glyphicon glyphicon-th" data-toggle="tooltip" data-placement="top" title="Find hosts sharing this IP address"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/httpheaders/?q=http://vps22351531.exampledomain.com" data-target="#myModal"><span class="glyphicon glyphicon-globe" data-toggle="tooltip" data-placement="top" title="Get HTTP Headers"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/mtr/?q=184.168.221.7" data-target="#myModal"><span class="glyphicon glyphicon-random" data-toggle="tooltip" data-placement="top" title="Trace path"></span></a> <span style="font-size: 0.9em; color: #eee; margin-left: 20px; color: #0C0;"  data-toggle="tooltip" data-placement="top" title="HTTP Server found in Global Scan data (Passive)">Microsoft-IIS/7.5
+</span>
+                            </td><td class="col-md-3">184.168.221.7<br><span style="font-size: 0.9em; color: #eee;">ip-184-168-221-7.ip.secureserver.net</span></td><td class="col-md-3">AS26496 GoDaddy.com, LLC<br><span style="font-size: 0.9em; color: #eee;">United States</span></td></tr>
+
+                            <tr><td class="col-md-4">vps29782186.exampledomain.com<br>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/reverseiplookup/?q=184.168.221.9" data-target="#myModal"><span class="glyphicon glyphicon-th" data-toggle="tooltip" data-placement="top" title="Find hosts sharing this IP address"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/httpheaders/?q=http://vps29782186.exampledomain.com" data-target="#myModal"><span class="glyphicon glyphicon-globe" data-toggle="tooltip" data-placement="top" title="Get HTTP Headers"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/mtr/?q=184.168.221.9" data-target="#myModal"><span class="glyphicon glyphicon-random" data-toggle="tooltip" data-placement="top" title="Trace path"></span></a> <span style="font-size: 0.9em; color: #eee; margin-left: 20px; color: #0C0;"  data-toggle="tooltip" data-placement="top" title="HTTP Server found in Global Scan data (Passive)">Microsoft-IIS/7.5
+</span>
+                            </td><td class="col-md-3">184.168.221.9<br><span style="font-size: 0.9em; color: #eee;">ip-184-168-221-9.ip.secureserver.net</span></td><td class="col-md-3">AS26496 GoDaddy.com, LLC<br><span style="font-size: 0.9em; color: #eee;">United States</span></td></tr>
+
+                            <tr><td class="col-md-4">vps57573743.exampledomain.com<br>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/reverseiplookup/?q=50.63.202.14" data-target="#myModal"><span class="glyphicon glyphicon-th" data-toggle="tooltip" data-placement="top" title="Find hosts sharing this IP address"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/httpheaders/?q=http://vps57573743.exampledomain.com" data-target="#myModal"><span class="glyphicon glyphicon-globe" data-toggle="tooltip" data-placement="top" title="Get HTTP Headers"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/mtr/?q=50.63.202.14" data-target="#myModal"><span class="glyphicon glyphicon-random" data-toggle="tooltip" data-placement="top" title="Trace path"></span></a> <span style="font-size: 0.9em; color: #eee; margin-left: 20px; color: #0C0;"  data-toggle="tooltip" data-placement="top" title="HTTP Server found in Global Scan data (Passive)">Microsoft-IIS/7.5
+</span>
+                            </td><td class="col-md-3">50.63.202.14<br><span style="font-size: 0.9em; color: #eee;">ip-50-63-202-14.ip.secureserver.net</span></td><td class="col-md-3">AS26496 GoDaddy.com, LLC<br><span style="font-size: 0.9em; color: #eee;">United States</span></td></tr>
+
+                            <tr><td class="col-md-4">vps5025.exampledomain.com<br>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/reverseiplookup/?q=50.63.202.7" data-target="#myModal"><span class="glyphicon glyphicon-th" data-toggle="tooltip" data-placement="top" title="Find hosts sharing this IP address"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/httpheaders/?q=http://vps5025.exampledomain.com" data-target="#myModal"><span class="glyphicon glyphicon-globe" data-toggle="tooltip" data-placement="top" title="Get HTTP Headers"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/mtr/?q=50.63.202.7" data-target="#myModal"><span class="glyphicon glyphicon-random" data-toggle="tooltip" data-placement="top" title="Trace path"></span></a> <span style="font-size: 0.9em; color: #eee; margin-left: 20px; color: #0C0;"  data-toggle="tooltip" data-placement="top" title="HTTP Server found in Global Scan data (Passive)">Microsoft-IIS/7.5
+</span>
+                            </td><td class="col-md-3">50.63.202.7<br><span style="font-size: 0.9em; color: #eee;">ip-50-63-202-7.ip.secureserver.net</span></td><td class="col-md-3">AS26496 GoDaddy.com, LLC<br><span style="font-size: 0.9em; color: #eee;">United States</span></td></tr>
+
+                            <tr><td class="col-md-4">www.exampledomain.com<br>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/reverseiplookup/?q=50.63.202.9" data-target="#myModal"><span class="glyphicon glyphicon-th" data-toggle="tooltip" data-placement="top" title="Find hosts sharing this IP address"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/httpheaders/?q=http://www.exampledomain.com" data-target="#myModal"><span class="glyphicon glyphicon-globe" data-toggle="tooltip" data-placement="top" title="Get HTTP Headers"></span></a>
+                                <a class="external nounderline" data-toggle="modal" href="https://api.hackertarget.com/mtr/?q=50.63.202.9" data-target="#myModal"><span class="glyphicon glyphicon-random" data-toggle="tooltip" data-placement="top" title="Trace path"></span></a> <span style="font-size: 0.9em; color: #eee; margin-left: 20px; color: #0C0;"  data-toggle="tooltip" data-placement="top" title="HTTP Server found in Global Scan data (Passive)">Microsoft-IIS/7.5
+</span>
+                            </td><td class="col-md-3">50.63.202.9<br><span style="font-size: 0.9em; color: #eee;">ip-50-63-202-9.ip.secureserver.net</span></td><td class="col-md-3">AS26496 GoDaddy.com, LLC<br><span style="font-size: 0.9em; color: #eee;">United States</span></td></tr>
+
+                        </table>
+                        <br>
+
+                        <div style="margin: 30px;" align="center"><a href="https://dnsdumpster.com/static/xls/exampledomain.com-201604100427.xlsx"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-download" aria-hidden="true"></span> Download .xlsx of Hosts</button></a></div>
+                        <br>
+                        <p style="color: #ddd; font-family: 'Courier New', Courier, monospace; text-align: left;"><a name="domainmap"></a>Mapping the domain<span style="font-size: 0.8em; color: #777;"> ** click for full size image</span> </P>
+                        <p>
+                            <a href="/static/map/exampledomain.com.png"><img  class="img-responsive"  src="/static/map/exampledomain.com.png"></a>
+                        </p>
+                    </div>
+
+
+
+                    <p class="lead" style="margin-top: 40px; margin-bottom: 30px;">DNSdumpster.com is a FREE domain research tool that can discover hosts related to a domain. Finding visible hosts from the attackers perspective is an important part of the security assessment process.</p>
+
+                </div>
+
+                <p style="color: #777;">this is a <a href="https://hackertarget.com/" title="Online Vulnerability Scanners"><button type="button" class="btn btn-danger btn-xs">HackerTarget.com</button></a> project</p>
+
+                <p><a href="#section2"><i style="background-color: #333; color: #ccc; font-size: 3em; line-height: 5em;" class="glyphicon glyphicon-chevron-down"></i></a></p>
+
+
+
+
+                <!-- Modal -->
+                <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-body">
+                            </div>
+                        </div><!-- /.modal-content -->
+                    </div><!-- /.modal-dialog -->
+                </div><!-- /.modal -->
+
+
+
+
+
+            </div>
+        </section>
+        <!-- Section 2 -->
+        <section id="home" data-speed="4" data-type="background">
+            <a name="section2"></a>
+            <div class="container"><div class="col-md-2"></div><div class="col-md-8">
+
+                <span class="glyphicon glyphicon-trash" style="font-size: 4em; line-height: 5.5em;"></span>
+                <p style="font-size: 1.7em; line-height: 1.9em; margin-bottom: 80px;">Map an organizations attack surface with a virtual <i>dumpster dive*</i> of the DNS records associated with the target organization.</P>
+                <p style="font-size: 1.2em; color: #ccc;">*DUMPSTER DIVING: The practice of sifting refuse from an office or technical installation to extract confidential data, especially security-compromising information.<br><span style="font-size: 0.9;"><i>Dictionary.com</i></span></P>
+                <p><a href="#section3"><i style="background-color: #333; color: #ccc; font-size: 2em; line-height: 4em;" class="glyphicon glyphicon-chevron-down"></i></a></p>
+            </div</div>    </div>
+    </section>
+    <!-- Section 3 -->
+    <section id="about" data-speed="2" data-type="background">
+        <a name="section3"></a>
+        <div class="container"><div class="col-md-2"></div><div class="col-md-8">
+
+            <span class="glyphicon glyphicon-cog" style="font-size: 4em; line-height: 5.5em;"></span>
+            <p style="font-size: 1.6em; line-height: 1.7em; margin-bottom: 80px;">More than a simple <a href="https://hackertarget.com/dns-lookup/" title="Online DNS Lookup">DNS lookup</a> this tool will discover those hard to find sub-domains and web hosts. No brute force of common sub-domains is undertaken as is common practice for many DNS recon tools. The search relies on data from search engines and the excellent <a href="https://scans.io" style="text-decoration: underline;">scans.io</a> research project.</P>
+            <p><a href="#section4"><i style="background-color: #333; color: #ccc; font-size: 2em; line-height: 4em;" class="glyphicon glyphicon-chevron-down"></i></a></p>
+        </div</div>    </div>
+</section>
+
+
+<!-- Section 4 -->
+<section id="about" data-speed="2" data-type="background">
+    <a name="section4"></a>
+    <div class="container"><div class="col-md-2"></div><div class="col-md-8">
+
+        <span class="glyphicon glyphicon-envelope" style="font-size: 4em; line-height: 5.5em;"></span>
+        <p style="font-size: 1.6em; line-height: 1.7em; margin-bottom: 80px;">Receive updates by following <a href="https://twitter.com/hackertarget" title="Twitter" style="text-decoration: underline;">@hackertarget</a> on Twitter<br> or subscribe to the low volume <a style="text-decoration: underline;" href="http://eepurl.com/jDaVL">mailing list</a>.</P>
+    </div</div>
+    <p style="color: #777;">this is a <a href="https://hackertarget.com/" title="Online Vulnerability Scanners"><button type="button" class="btn btn-danger btn-xs">HackerTarget.com</button></a> project</p></div>
+</section>
+
+</div>
+</div>
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="/static/js/bootstrap.min.js"></script>
+<script src="/static/js/docs.min.js"></script>
+<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+<script src="/static/js/ie10-viewport-bug-workaround.js"></script>
+
+
+<script src="/static/Chart.js"></script>
+<link rel="stylesheet" href="/static/jquery-jvectormap-2.0.1.css" type="text/css" media="screen"/>
+<script src="/static/jquery-jvectormap-2.0.1.min.js"></script>
+<script src="/static/jquery-jvectormap-world-mill-en.js"></script>
+
+<script type="text/javascript">
+    var barChartData = {
+        labels : [
+
+            "AS26496 GoDaddy.com, LLC",
+
+        ],
+        datasets : [
+            {
+                fillColor : "#ccc",
+                strokeColor : "#ccc",
+                data : [
+
+                    9,
+
+                ],
+            }
+        ]
+    }
+
+    window.onload = function(){
+        var ctx = document.getElementById("hosting").getContext("2d");
+        window.myBar = new Chart(ctx).Bar(barChartData, {
+        });
+    }
+
+
+
+
+</script>
+
+
+<script>
+    var gdpData = {
+
+        "US" : 9,
+
+    };
+    $(function(){
+        $('#world-map').vectorMap({
+            map: 'world_mill_en',
+            backgroundColor: '#333333',
+            zoomButtons : false,
+            series: {
+                regions: [{
+                    values: gdpData,
+                    scale: ['#00CC00', '#008400'],
+                    normalizeFunction: 'polynomial'
+                }]
+            },
+            onRegionTipShow: function(e, el, code){
+                if (typeof gdpData[code] !=="undefined"){
+                    el.html(el.html()+' <br>Hosts Found : '+gdpData[code]);
+                }
+            }
+        });
+    });
+</script>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('[data-toggle="tooltip"]').tooltip({'placement': 'top'});
+
+    }); //END $(document).ready()
+
+
+    $('a.external').on('click', function(e) {
+        e.preventDefault();
+        var url = $(this).attr('href');
+        $(".modal-body").html('<iframe style="background-color: #ccc;" width="100%" height="100%" frameborder="0" scrolling="yes" allowtransparency="true" src="'+url+'"></iframe>');
+
+    });
+
+    $('#myModal').on('show.bs.modal', function () {
+
+        $(this).find('.modal-dialog').css({
+            width:'90%', //choose your width
+            height:'80%',
+            'padding':'5'
+        });
+        $(this).find('.modal-content').css({
+            height:'100%',
+            'border-radius':'0',
+            'padding':'5'
+        });
+        $(this).find('.modal-body').css({
+            width:'auto',
+            height:'100%',
+            'padding':'5'
+        });
+    })
+
+
+
+</script>
+
+
+<script>
+    $(document).ready(function(){
+        $("#showloading").hide();
+        $("#formsubmit").click(function(){
+            $("#hideform").hide();
+            $("#showloading").show();
+        });
+
+    });
+</script>
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-2487671-6', 'auto');
+    ga('send', 'pageview');
+
+</script>
+</body>
+</html>

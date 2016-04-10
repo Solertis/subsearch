@@ -1,12 +1,13 @@
 package com.gilazaria.subsearch.core.subdomainscanner
 
-import com.gilazaria.subsearch.core.subdomainscanner.DispatcherMessage.{ResumeScanning, PauseScanning}
+import com.gilazaria.subsearch.core.subdomainscanner.DispatcherMessage.{PauseScanning, ResumeScanning}
 import com.gilazaria.subsearch.output.Logger
 import com.gilazaria.subsearch.utils.TimeUtils
-
 import akka.actor.ActorRef
 import akka.pattern.ask
+import scala.concurrent.ExecutionContext.Implicits.global
 import sun.misc.{Signal, SignalHandler}
+
 import scala.concurrent.Await
 
 /**
@@ -31,7 +32,7 @@ class PauseHandler(signalNames: List[String], dispatcher: ActorRef, logger: Logg
 
   override def handle(signal: Signal) = {
     if (pausingCalled)
-      exit()
+      forceExit()
     else
       pausingCalled = true
 
@@ -59,9 +60,14 @@ class PauseHandler(signalNames: List[String], dispatcher: ActorRef, logger: Logg
     }
   }
 
+  private def forceExit() = {
+    logger.logScanForceCancelled()
+    System.exit(0)
+  }
+
   private def exit() = {
     logger.logScanCancelled()
-    System.exit(0)
+    logger.completedLoggingFuture.andThen { case _ => System.exit(0) }
   }
 
   private def resume() = {

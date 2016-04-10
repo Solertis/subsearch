@@ -12,6 +12,7 @@ case class Arguments(hostnames: List[String] = List.empty,
                      extendedOutput: Boolean = false,
                      threads: Int = 10,
                      performZoneTransfer: Boolean = false,
+                     performDNSDumpsterScan: Boolean = false,
                      csvReportFile: Option[File] = None,
                      stdoutReportFile: Option[File] = None)
 
@@ -120,11 +121,18 @@ private class ArgumentParser(private val args: Array[String]) {
       .text("Runs all additional scanners.")
       .action {
         (argument, config) =>
-          config.copy(performZoneTransfer = true)
+          config.copy(performZoneTransfer = true, performDNSDumpsterScan = true)
       }
 
     note("")
     note("Additional Scanners:")
+
+    opt[Unit]("dns-dumpster")
+      .text("Attempts to lookup possible records from dnsdumpster.com")
+      .action {
+        (argument, config) =>
+          config.copy(performDNSDumpsterScan = true)
+      }
 
     opt[Unit]('z', "zone-transfer")
       .text("Attempts a zone transfer against the host's authoritative name servers.")

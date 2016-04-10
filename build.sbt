@@ -2,7 +2,7 @@ name := "subsearch"
 
 assemblyJarName in assembly := s"subsearch-0.1.x-SNAPSHOT.jar"
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.8"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
@@ -17,3 +17,4 @@ libraryDependencies += "pl.project13.scala" %% "rainbow" % "0.2"
 libraryDependencies += "dnsjava" % "dnsjava" % "2.1.7"
 libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.4.1"
 libraryDependencies += "org.scala-lang.modules" % "scala-jline" % "2.12.1"
+libraryDependencies += "net.ruippeixotog" %% "scala-scraper" % "1.0.0"

@@ -11,6 +11,7 @@ import scala.concurrent.{ExecutionContext, Future}
 case class SubdomainScannerArguments(hostname: String,
                                      wordlist: File,
                                      omitSubdomains: List[String],
+                                     prioritySubdomains: List[String],
                                      resolvers: List[String],
                                      threads: Int,
                                      concurrentResolverRequests: Boolean)

@@ -26,7 +26,7 @@ class Dispatcher(arguments: SubdomainScannerArguments, listener: ActorRef)(impli
   var numberOfPausedScanners = 0
   var whoToNotifyAboutPaused: Option[ActorRef] = None
 
-  val dispatcherQueue: DispatcherQueue = DispatcherQueue.create(arguments.hostname, arguments.wordlist, arguments.omitSubdomains, arguments.resolvers, arguments.concurrentResolverRequests)
+  val dispatcherQueue: DispatcherQueue = DispatcherQueue.create(arguments.hostname, arguments.wordlist, arguments.omitSubdomains, arguments.prioritySubdomains, arguments.resolvers, arguments.concurrentResolverRequests)
 
   var scansSoFar: Int = 0
 

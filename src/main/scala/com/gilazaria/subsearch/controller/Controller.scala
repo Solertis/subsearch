@@ -3,7 +3,7 @@ package com.gilazaria.subsearch.controller
 import java.util.concurrent.Executors
 
 import com.gilazaria.subsearch.SubSearch
-import com.gilazaria.subsearch.core.{Arguments, AuthoritativeScanner, ZoneTransferScanner}
+import com.gilazaria.subsearch.core.{Arguments, AuthoritativeScanner, DNSDumpsterScanner, ZoneTransferScanner}
 import com.gilazaria.subsearch.core.subdomainscanner.{SubdomainScanner, SubdomainScannerArguments}
 import com.gilazaria.subsearch.output.Logger
 import com.gilazaria.subsearch.utils.{FileUtils, TimeUtils}
@@ -56,7 +56,9 @@ class Controller(private val arguments: Arguments, private val logger: Logger) {
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutorService(executorService)
 
     val authoritativeNameServers: Set[String] = retrieveAuthoritativeNameServers(hostname)
+
     val zoneTransferSubdomains: Set[String] = performZoneTransferScan(hostname, authoritativeNameServers)
+    val dnsDumpsterSubdomains: Set[String] = performDNSDumpsterScan(hostname)
 
     val resolvers =
       if (arguments.includeAuthoritativeNameServersWithResolvers) (arguments.resolvers ++ authoritativeNameServers).distinct
@@ -65,7 +67,7 @@ class Controller(private val arguments: Arguments, private val logger: Logger) {
     if (arguments.includeAuthoritativeNameServersWithResolvers)
       logger.logAddingAuthNameServersToResolvers(resolvers.size)
 
-    val subdomainScannerArguments = SubdomainScannerArguments(hostname, arguments.wordlist.get, zoneTransferSubdomains.toList, resolvers, arguments.threads, arguments.concurrentResolverRequests)
+    val subdomainScannerArguments = SubdomainScannerArguments(hostname, arguments.wordlist.get, zoneTransferSubdomains.toList, dnsDumpsterSubdomains.toList, resolvers, arguments.threads, arguments.concurrentResolverRequests)
 
     SubdomainScanner.performScan(subdomainScannerArguments, logger)
   }
@@ -76,15 +78,27 @@ class Controller(private val arguments: Arguments, private val logger: Logger) {
     Await.result(lookup, TimeUtils.awaitDuration)
   }
 
-  private def performZoneTransferScan(hostname: String, resolvers: Set[String]): Set[String] = {
-    if (arguments.performZoneTransfer) {
-      val scanner = ZoneTransferScanner.create(logger)
-      val lookup = scanner.performLookup(hostname, resolvers)
-      Await.result(lookup, TimeUtils.awaitDuration)
-    } else {
+  private def performZoneTransferScan(hostname: String, resolvers: Set[String]): Set[String] =
+    if (arguments.performZoneTransfer)
+      Await.result(
+        ZoneTransferScanner
+          .create(logger)
+          .performLookup(hostname, resolvers),
+        TimeUtils.awaitDuration
+      )
+    else
       Set.empty
-    }
-  }
+
+  private def performDNSDumpsterScan(hostname: String): Set[String] =
+    if (arguments.performDNSDumpsterScan)
+      Await.result(
+        DNSDumpsterScanner
+          .create(logger)
+          .performScan(hostname),
+        TimeUtils.awaitDuration
+      )
+    else
+      Set.empty
 
   def exitGracefully() =
     logger.completedLoggingFuture.andThen { case _ => System.exit(0) }

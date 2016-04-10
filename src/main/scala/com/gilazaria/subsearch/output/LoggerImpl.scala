@@ -1,14 +1,15 @@
 package com.gilazaria.subsearch.output
 
+import java.util.concurrent.Executors
+
 import com.gilazaria.subsearch.model.Record
 import com.gilazaria.subsearch.utils.File
 import com.gilazaria.subsearch.utils.MathUtils.percentage
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 import scala.collection.SortedSet
 
-class LoggerImpl(private val verbose: Boolean, csvReportFile: Option[File], stdoutReportFile: Option[File]) extends Logger {
+class LoggerImpl(private val verbose: Boolean, csvReportFile: Option[File], stdoutReportFile: Option[File])(implicit ec: ExecutionContext) extends Logger {
   private val cli: Option[CLIOutput] = Some(CLIOutput.create(verbose))
   private val stdout: Option[StandardOutput] = StandardOutput.create(stdoutReportFile, verbose)
   private val csv: Option[CSVOutput] = CSVOutput.create(csvReportFile)
@@ -58,6 +59,19 @@ class LoggerImpl(private val verbose: Boolean, csvReportFile: Option[File], stdo
         output.println()
     }
 
+  // DNS Dumpster Scanner
+  override def logDNSDumpsterScanStarted() =
+    outputs.foreach(_.printStatus("Querying DNS Dumpster for subdomains:"))
+
+  override def logDNSDumpsterScanCompleted() =
+    outputs.foreach(_.println())
+
+  override def logDNSDumpsterFoundSubdomains(subdomains: Set[String]) =
+    outputs.foreach(_.printSuccess(s"Found ${subdomains.size} possible subdomains!"))
+
+  override def logDNSDumpsterConnectionError(msg: String) =
+    outputs.foreach(_.printInfo(s"Error occurred: $msg"))
+
   def logStartedSubdomainSearch() =
     outputs.foreach(_.printStatus("Starting subdomain search:"))
 
@@ -91,10 +105,16 @@ class LoggerImpl(private val verbose: Boolean, csvReportFile: Option[File], stdo
         output.println()
         output.println()
         output.printErrorWithoutTime("Cancelled by the user")
+    }
 
+  def logScanForceCancelled() = {
+    logScanCancelled()
+    outputs.foreach {
+      output =>
         if (!completedLoggingFuture.isCompleted && (csvReportFile.isDefined || stdoutReportFile.isDefined))
           output.printErrorWithoutTime("WARNING: Reports may not be complete due to unexpected exit.")
     }
+  }
 
   def completedLoggingFuture: Future[Unit] = {
     Future.sequence(outputs.map(_.writingToFileFuture)).map(_ => Unit)
@@ -127,10 +147,13 @@ class LoggerImpl(private val verbose: Boolean, csvReportFile: Option[File], stdo
 
   private def saveNewRecords(records: SortedSet[Record]) =
     allSeenRecords = allSeenRecords ++ records
-
 }
 
 object LoggerImpl {
-  def create(extendedOutput: Boolean, csvReportFile: Option[File], stdoutReportFile: Option[File]): Logger =
-    new LoggerImpl(extendedOutput, csvReportFile, stdoutReportFile)
+  def create(extendedOutput: Boolean, csvReportFile: Option[File], stdoutReportFile: Option[File]): Logger = {
+    val executorService = Executors.newFixedThreadPool(1)
+    implicit val ec: ExecutionContext = ExecutionContext.fromExecutorService(executorService)
+
+    new LoggerImpl(extendedOutput, csvReportFile, stdoutReportFile)(ec)
+  }
 }
