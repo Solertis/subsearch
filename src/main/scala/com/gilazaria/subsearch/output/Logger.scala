@@ -6,6 +6,7 @@ import scala.collection.SortedSet
 import scala.concurrent.Future
 
 trait Logger {
+  // Controller
   def logHeader(header: String)
   def logConfig(threads: Int, wordlistSize: Int, resolverslistSize: Int)
   def logTarget(hostname: String)
@@ -14,6 +15,7 @@ trait Logger {
   def logAuthoritativeScanStarted()
   def logAuthoritativeNameServer(nameServer: String)
   def logAuthoritativeScanCompleted()
+  def logAddingAuthNameServersToResolvers(totalResolversSize: Int)
 
   // Zone Transfer Scanner
   def logStartedZoneTransfer()
@@ -21,14 +23,11 @@ trait Logger {
   def logNameServerVulnerableToZoneTransfer(nameServer: String)
   def logZoneTransferCompleted()
 
-  // DNS Dumpster Scanner
-  def logDNSDumpsterScanStarted()
-  def logDNSDumpsterConnectionError(msg: String)
-  def logDNSDumpsterFoundSubdomains(subdomains: Set[String])
-  def logDNSDumpsterScanCompleted()
-
-  // Controller
-  def logAddingAuthNameServersToResolvers(totalResolversSize: Int)
+  // Additional Scanners
+  def logAdditionalScansStarted()
+  def logAdditionalScannerError(scannerName: String, msg: String)
+  def logAdditionalScannerFoundSubdomains(scannerName: String, subdomains: Set[String])
+  def logAdditionalScansCompleted()
 
   // Subdomain Bruteforce Scanner
   def logStartedSubdomainSearch()
@@ -44,7 +43,7 @@ trait Logger {
   def logScanForceCancelled()
   def logLastRequest(subdomain: String, numberOfRequestsSoFar: Int, totalNumberOfSubdomains: Int)
 
-  // Misc
+  // Records
   def logRecords(records: SortedSet[Record])
   def logRecordsDuringScan(records: SortedSet[Record])
 

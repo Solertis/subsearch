@@ -10,11 +10,14 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.collection.SortedSet
 
 class LoggerImpl(private val verbose: Boolean, csvReportFile: Option[File], stdoutReportFile: Option[File])(implicit ec: ExecutionContext) extends Logger {
-  private val cli: Option[CLIOutput] = Some(CLIOutput.create(verbose))
-  private val stdout: Option[StandardOutput] = StandardOutput.create(stdoutReportFile, verbose)
-  private val csv: Option[CSVOutput] = CSVOutput.create(csvReportFile)
+  private val outputs: Set[Output] =
+    Set(
+      Some(CLIOutput.create(verbose)),
+      StandardOutput.create(stdoutReportFile, verbose),
+      CSVOutput.create(csvReportFile)
+    ).flatten
 
-  private val outputs: List[Output] = List(cli, csv, stdout).flatten
+  /** Controller **/
 
   def logHeader(header: String) =
     outputs.foreach(_.printHeader(header))
@@ -31,6 +34,8 @@ class LoggerImpl(private val verbose: Boolean, csvReportFile: Option[File], stdo
   def logTarget(hostname: String) =
     outputs.foreach(_.printTarget("Target: ", hostname))
 
+  /** Authoritative Scanner **/
+
   def logAuthoritativeScanStarted() =
     outputs.foreach(_.printStatus("Identifying authoritative name servers:"))
 
@@ -39,6 +44,15 @@ class LoggerImpl(private val verbose: Boolean, csvReportFile: Option[File], stdo
 
   def logAuthoritativeScanCompleted() =
     outputs.foreach(_.println())
+
+  def logAddingAuthNameServersToResolvers(totalResolversSize: Int) =
+    outputs.foreach {
+      output =>
+        output.printStatus(s"Adding authoritative name servers to list of resolvers with a total of $totalResolversSize")
+        output.println()
+    }
+
+  /** Zone Transfer Scanner **/
 
   def logStartedZoneTransfer() =
     outputs.foreach(_.printStatus("Attempting zone transfer:"))
@@ -52,25 +66,21 @@ class LoggerImpl(private val verbose: Boolean, csvReportFile: Option[File], stdo
   def logZoneTransferCompleted() =
     outputs.foreach(_.println())
 
-  def logAddingAuthNameServersToResolvers(totalResolversSize: Int) =
-    outputs.foreach {
-      output =>
-        output.printStatus(s"Adding authoritative name servers to list of resolvers with a total of $totalResolversSize")
-        output.println()
-    }
+  /** Additional Scanners **/
 
-  // DNS Dumpster Scanner
-  override def logDNSDumpsterScanStarted() =
-    outputs.foreach(_.printStatus("Querying DNS Dumpster for subdomains:"))
+  override def logAdditionalScansStarted() =
+    outputs.foreach(_.printStatus("Launching additional scanners:"))
 
-  override def logDNSDumpsterScanCompleted() =
+  override def logAdditionalScannerError(scannerName: String, msg: String) =
+    outputs.foreach(_.printInfo(s"$scannerName - Error: $msg"))
+
+  override def logAdditionalScannerFoundSubdomains(scannerName: String, subdomains: Set[String]) =
+    outputs.foreach(_.printSuccess(s"$scannerName found ${subdomains.size} possible subdomains."))
+
+  override def logAdditionalScansCompleted() =
     outputs.foreach(_.println())
 
-  override def logDNSDumpsterFoundSubdomains(subdomains: Set[String]) =
-    outputs.foreach(_.printSuccess(s"Found ${subdomains.size} possible subdomains!"))
-
-  override def logDNSDumpsterConnectionError(msg: String) =
-    outputs.foreach(_.printInfo(s"Error occurred: $msg"))
+  /** Subdomain Bruteforce Scanner **/
 
   def logStartedSubdomainSearch() =
     outputs.foreach(_.printStatus("Starting subdomain search:"))
@@ -116,14 +126,12 @@ class LoggerImpl(private val verbose: Boolean, csvReportFile: Option[File], stdo
     }
   }
 
-  def completedLoggingFuture: Future[Unit] = {
-    Future.sequence(outputs.map(_.writingToFileFuture)).map(_ => Unit)
-  }
-
   def logLastRequest(subdomain: String, numberOfRequestsSoFar: Int, totalNumberOfSubdomains: Int) = {
     val progress: Float = percentage(numberOfRequestsSoFar, totalNumberOfSubdomains)
     outputs.foreach(_.printLastRequest(f"$progress%.2f" + s"% - Last request to: $subdomain"))
   }
+
+  /** Records **/
 
   def logRecords(records: SortedSet[Record]) = {
     val newRecords = filterOutSeenAndInvalidRecords(records)
@@ -138,6 +146,14 @@ class LoggerImpl(private val verbose: Boolean, csvReportFile: Option[File], stdo
 
     outputs.foreach(_.printRecordsDuringScan(newRecords))
   }
+
+  /** Utility **/
+
+  def completedLoggingFuture: Future[Unit] = {
+    Future.sequence(outputs.map(_.writingToFileFuture)).map(_ => Unit)
+  }
+
+  /** Internal **/
 
   private var allSeenRecords: SortedSet[Record] = SortedSet.empty
   private def filterOutSeenAndInvalidRecords(records: SortedSet[Record]): SortedSet[Record] =

@@ -13,6 +13,7 @@ case class Arguments(hostnames: List[String] = List.empty,
                      threads: Int = 10,
                      performZoneTransfer: Boolean = false,
                      performDNSDumpsterScan: Boolean = false,
+                     performVirusTotalScan: Boolean = false,
                      csvReportFile: Option[File] = None,
                      stdoutReportFile: Option[File] = None)
 
@@ -121,7 +122,11 @@ private class ArgumentParser(private val args: Array[String]) {
       .text("Runs all additional scanners.")
       .action {
         (argument, config) =>
-          config.copy(performZoneTransfer = true, performDNSDumpsterScan = true)
+          config.copy(
+            performZoneTransfer = true,
+            performDNSDumpsterScan = true,
+            performVirusTotalScan = true
+          )
       }
 
     note("")
@@ -132,6 +137,13 @@ private class ArgumentParser(private val args: Array[String]) {
       .action {
         (argument, config) =>
           config.copy(performDNSDumpsterScan = true)
+      }
+
+    opt[Unit]("virus-total")
+      .text("Attempts to lookup possible records from virustotal.com")
+      .action {
+        (argument, config) =>
+          config.copy(performVirusTotalScan = true)
       }
 
     opt[Unit]('z', "zone-transfer")

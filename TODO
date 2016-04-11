@@ -1,6 +1,6 @@
 TODO: Change execution context to be imported from an object
 TODO: Prevent Listener from printing messages after pausing
-TODO: Implement third party services as scan options (e.g. VirusTotal, autogeneration of short letter and number combinations, http://bgp.he.net lookup)
+TODO: Implement third party services as scan options (e.g. autogeneration of short letter and number combinations, http://bgp.he.net lookup)
 TODO: Read file resolvers in to memory as they're used
 TODO: Create a list of found subdomains so that they are not rescanned
 TODO: Read in previously found subdomains csv file
