@@ -14,5 +14,5 @@ object SubSearch {
   def main(args: Array[String]): Unit =
     new SubSearch(args)
 
-  val version = "0.1.x-SNAPSHOT"
+  val version = "0.2.0"
 }

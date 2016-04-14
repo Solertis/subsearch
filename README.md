@@ -1,24 +1,26 @@
 # subsearch
-subsearch is a command line tool designed to brute force subdomain names. It is aimed at penetration testers and bug
+subsearch is a command line tool designed to discover subdomain names. It is aimed at penetration testers and bug
 bounty hunters and has been built with a focus on speed, stealth and reporting.
 
-The current release is version 0.1.1 and was published on 14/3/2016.
+The current release is version 0.2.0 and was published on 14/4/2016.
 
 ## Features
 
 - Scan a single hostname or a list of hostnames
 - Takes as arguments a comma separated list of DNS resolvers, and/or a file containing newline delimited list of resolvers
-- Check if the hostname's authoritative name servers are vulnerable to a zone transfer (can be skipped)
 - Recursive scanning: If a CNAME, MX, NS or SRV record is discovered, the any subdomains will be added to a priority list
 of subdomains to scan for
-- Extra level of verbosity
-- Reporting capability
-- Real-time feedback
+- Support for additional scanners:
+  - Attempt a Zone Transfer on the hostname's authoritative name servers
+  - Retrieve seen subdomains from Virus Total
+  - Retrieve seen subdomains from DNS Dumpster
+- Different levels of verbosity
+- Multiple real-time reporting capabilities
 - Supports the use of massive wordlists
 
 ## Requirements
 
-subsearch is built on and requires Java 8.
+subsearch is built in scala using the Java 8 SDK.
 
 ## How to use
 
@@ -29,7 +31,7 @@ jar will be located in `target/scala-2.11/`.
 To show the below help text, execute `java -jar <subsearch jar file> --help`.
 
 ```
-subsearch 0.1.1
+ubsearch 0.2.0
 Usage: subsearch [options]
 
 Options:
@@ -59,12 +61,22 @@ General Settings:
         The number of concurrent threads whilst scanning. Defaults to 10.
   -v | --verbose
         Show more extended command line output such as the addresses that A, AAAA and CNAME records point to. Defaults to false.
-  -z | --no-zone-transfer
-        Avoids attempting a zone transfer against the host's authoritative name servers.
+  --comprehensive
+        Runs all additional scanners.
+
+Additional Scanners:
+  --dns-dumpster
+        Attempts to lookup possible records from dnsdumpster.com
+  --virus-total
+        Attempts to lookup possible records from virustotal.com
+  -z | --zone-transfer
+        Attempts a zone transfer against the host's authoritative name servers.
 
 Reporting:
-  --csv-report OUTPUTFILE
+  --report-csv OUTPUTFILE
         Outputs a CSV report of discovered subdomains including timestamp, subdomain, record type and record data.
+  --report-stdout OUTPUTFILE
+        Outputs standard out to a file.
 
 ```
 
@@ -85,6 +97,13 @@ For a list of things that are already on my roadmap, checkout the `TODO` file.
 
 ## Changelog
 
+- 0.2.0 - 14/4/2016
+  - Added Virus Total and DNS Dumpster as additional scanners
+  - Zone Transfer is now off by default
+  - Added an option to report standard out to file
+  - Numerous bug fixes
+  - Began writing tests
+  - Removed check to see if domain is "valid"
 - 0.1.1 - 14/3/2016
   - subsearch can now handle massive wordlists, wordlists aren't loaded into memory in one go
   - resolver timeouts increased from 5, 10 and 15 seconds to 10, 20 and 30 seconds
@@ -98,3 +117,5 @@ file.
 
 The design for the user interface has been inspired by the fantastic tool [dirsearch](https://github.com/maurosoria/dirsearch)
 by Mauro Soria. Anything that could be considered a direct copy of his tool is Copyright (C) Mauro Soria.
+
+All other work is Copyright (C) Gil Azaria.
