@@ -31,7 +31,7 @@ jar will be located in `target/scala-2.11/`.
 To show the below help text, execute `java -jar <subsearch jar file> --help`.
 
 ```
-ubsearch 0.2.0
+subsearch 0.2.0
 Usage: subsearch [options]
 
 Options:
